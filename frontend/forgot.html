@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sporthink CRM - Şifremi Unuttum</title>
+
+  <link rel="stylesheet" href="/frontend/css/forgot.css" />
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+</head>
+
+<body data-theme="dark">
+
+  <button id="themeToggle" class="theme-toggle" type="button">
+    <i class="fa-solid fa-moon"></i>
+  </button>
+
+  <main class="forgot-page">
+
+    <section class="forgot-card">
+
+      <div class="brand-area">
+        <img src="/frontend/images/logo.png" alt="Sporthink Logo" class="brand-logo" />
+        <p class="brand-subtitle">CRM SİSTEMİ</p>
+      </div>
+
+      <div class="lock-icon">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+
+      <div class="title-area">
+        <h1>Şifreni mi <span>unuttun?</span></h1>
+        <p>
+          Endişelenme, hesabına yeniden erişmen için
+          sadece birkaç adım uzağız.
+        </p>
+      </div>
+
+      <form id="forgotForm">
+
+        <div class="input-group">
+          <span class="input-icon">
+            <i class="fa-regular fa-envelope"></i>
+          </span>
+
+          <input
+            type="email"
+            id="email"
+            placeholder="E-posta adresinizi girin"
+            required
+          />
+        </div>
+
+        <button type="submit" class="reset-btn">
+          <span>Sıfırlama Bağlantısı Gönder</span>
+          <i class="fa-regular fa-paper-plane"></i>
+        </button>
+
+      </form>
+
+      <div class="divider">
+        <span>veya</span>
+      </div>
+
+      <a href="login.html" class="back-login">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Giriş Sayfasına Dön</span>
+      </a>
+
+      <div class="security-info">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Bilgileriniz 256-bit SSL sertifikası ile korunmaktadır.</span>
+      </div>
+
+    </section>
+
+  </main>
+  <script src="/frontend/js/forgot.js"></script>
+</body>
+</html>

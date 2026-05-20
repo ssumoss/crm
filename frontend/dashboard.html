@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sporthink CRM Dashboard</title>
+
+  <link rel="stylesheet" href="/frontend/css/dashboard.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+
+<body class="dark-mode">
+  <div class="dashboard">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <h1>spor<span>think</span></h1>
+        <p>CRM SİSTEMİ</p>
+      </div>
+
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <nav class="menu">
+
+  <a href="dashboard.html" data-permission="dashboard_goruntule">
+    <i class="fa-solid fa-chart-line"></i>
+    <span>Özet</span>
+  </a>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-users"></i>
+      <span>Müşteri Yönetimi</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="customers.html" data-permission="musteri_goruntule">
+        <i class="fa-solid fa-user-group"></i>
+        <span>Müşteriler</span>
+      </a>
+
+      <a href="segment-history.html" data-permission="segment_gecmisi_goruntule">
+        <i class="fa-solid fa-timeline"></i>
+        <span>Segment Geçmişi</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-database"></i>
+      <span>Satış Verileri</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="invoices.html" data-permission="musteri_detay_goruntule">
+        <i class="fa-solid fa-file-invoice"></i>
+        <span>Faturalar</span>
+      </a>
+
+      <a href="products.html" data-permission="veri_import">
+        <i class="fa-solid fa-box"></i>
+        <span>Ürünler</span>
+      </a>
+
+      <a href="returns.html" data-permission="veri_import">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>İadeler</span>
+      </a>
+
+      <a href="channels.html" data-permission="veri_import">
+        <i class="fa-solid fa-store"></i>
+        <span>Satış Noktaları</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Analizler</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="rfm.html" data-permission="rfm_analizi_calistir">
+        <i class="fa-solid fa-ranking-star"></i>
+        <span>RFM Analizi</span>
+      </a>
+
+      <a href="analytics.html" data-permission="ltv_analizi_calistir">
+        <i class="fa-solid fa-chart-simple"></i>
+        <span>Analitik</span>
+      </a>
+
+      <a href="reports.html" data-permission="rapor_export">
+        <i class="fa-solid fa-file-export"></i>
+        <span>Raporlar</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>Yönetim</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="users-permissions.html" data-permission="kullanici_yonet">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Kullanıcı & Yetki</span>
+      </a>
+
+      <a href="logs-audit.html" data-permission="audit_log_goruntule">
+        <i class="fa-solid fa-clipboard-list"></i>
+        <span>Log & Denetim</span>
+      </a>
+
+      <a href="settings.html" data-permission="izin_yonet">
+        <i class="fa-solid fa-gear"></i>
+        <span>Ayarlar</span>
+      </a>
+    </div>
+  </div>
+
+  <a href="login.html">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span>Çıkış</span>
+  </a>
+
+</nav>
+    </aside>
+
+    <main class="main">
+
+      <header class="topbar">
+        <div class="hello">
+          <h2 id="helloTitle">Merhaba, Kullanıcı</h2>
+          <p>Bugünkü CRM performansına hızlıca göz at.</p>
+        </div>
+
+        <div class="top-right">
+          <div class="search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="globalSearchInput" type="text" placeholder="Müşteri, fatura ara..." />
+            <div id="searchResults" class="search-results"></div>
+          </div>
+
+          <button class="theme-btn" id="themeToggle">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+
+          <div class="notification-wrapper">
+            <button class="notification-btn" id="notificationBtn" title="Bildirimler">
+              <i class="fa-solid fa-bell"></i>
+              <span id="notificationBadge">0</span>
+            </button>
+
+            <div class="notification-dropdown" id="notificationDropdown">
+              <div class="dropdown-head">
+                <h4>Bildirimler</h4>
+                <button id="markAllReadBtn">Tümünü okundu yap</button>
+              </div>
+              <div id="notificationList" class="dropdown-list">
+                <p class="empty-text">Bildirim yok.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="notification-wrapper">
+            <button class="notification-btn" id="messageBtn" title="Ekip Mesajları">
+              <i class="fa-solid fa-envelope"></i>
+              <span id="messageBadge">0</span>
+            </button>
+
+            <div class="notification-dropdown message-dropdown" id="messageDropdown">
+              <div class="dropdown-head">
+                <h4>Ekip İçi İletişim</h4>
+                <button id="newMessageToggleBtn">Yeni Mesaj</button>
+              </div>
+
+              <div class="message-send-box hidden" id="newMessageBox">
+                <select id="messageUserSelect">
+                  <option value="">Alıcı kullanıcı seç</option>
+                </select>
+                <textarea id="messageText" placeholder="Mesaj yaz..."></textarea>
+                <button id="sendMessageBtn">
+                  <i class="fa-solid fa-paper-plane"></i>
+                  Gönder
+                </button>
+              </div>
+
+              <div id="messageList" class="dropdown-list">
+                <p class="empty-text">Mesaj yok.</p>
+              </div>
+
+              <div id="messageDetailBox" class="message-detail-box hidden">
+                <button id="backToMessagesBtn" class="back-message-btn">
+                  <i class="fa-solid fa-arrow-left"></i>
+                  Mesajlara dön
+                </button>
+
+                <h4 id="detailSenderName">Gönderen</h4>
+                <span id="detailMessageDate">Tarih</span>
+                <p id="detailMessageText">Mesaj içeriği</p>
+
+                <textarea id="replyMessageText" placeholder="Cevap yaz..."></textarea>
+
+                <button id="sendReplyBtn">
+                  <i class="fa-solid fa-reply"></i>
+                  Cevapla
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="user" id="userDropdownBtn">
+            <div class="avatar" id="userAvatar">K</div>
+            <div>
+              <strong id="topUserName">Kullanıcı</strong>
+              <span id="topUserRole">Rol</span>
+            </div>
+            <i class="fa-solid fa-chevron-down"></i>
+
+            <div class="user-menu" id="userMenu">
+              <button id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Çıkış Yap
+              </button>
+            </div>
+          </div>
+
+          <div class="date">
+            <i class="fa-regular fa-calendar"></i>
+            <span id="currentDateTime">Tarih yükleniyor...</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div>
+            <p>Toplam Ciro</p>
+            <h3 id="totalRevenue">₺0</h3>
+            <span class="up"><i class="fa-solid fa-arrow-up"></i> CRM verisinden hesaplandı</span>
+          </div>
+          
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>Toplam Müşteri</p>
+            <h3 id="totalCustomers">0</h3>
+            <span class="up"><i class="fa-solid fa-arrow-up"></i> Kayıtlı müşteri sayısı</span>
+          </div>
+          <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>Toplam Sipariş</p>
+            <h3 id="totalOrders">0</h3>
+            <span class="up"><i class="fa-solid fa-arrow-up"></i> Toplam fatura/sipariş</span>
+          </div>
+          <div class="kpi-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>AOV / Ortalama Sipariş</p>
+            <h3 id="avgBasket">₺0</h3>
+            <span class="up"><i class="fa-solid fa-arrow-up"></i> Ortalama sepet tutarı</span>
+          </div>
+          <div class="kpi-icon"><i class="fa-solid fa-basket-shopping"></i></div>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>İade Oranı</p>
+            <h3 id="returnRate">%0</h3>
+            <span class="down"><i class="fa-solid fa-arrow-down"></i> İade / satış oranı</span>
+          </div>
+          <div class="kpi-icon"><i class="fa-solid fa-rotate-left"></i></div>
+        </div>
+
+        <div class="kpi-card danger">
+          <div>
+            <p>Yüksek Churn Riskli</p>
+            <h3 id="churnRisk">0</h3>
+            <span class="up"><i class="fa-solid fa-arrow-up"></i> Riskli müşteri sayısı</span>
+          </div>
+          <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        </div>
+      </section>
+
+      <section class="chart-grid">
+
+        <div class="panel sales-panel">
+          <div class="panel-head">
+            <h3>Satış Performansı <span>(Aylık)</span></h3>
+            <select id="salesYearSelect"></select>
+          </div>
+
+          <div class="chart-total-label">
+            Seçilen yıl toplamı:
+            <strong id="chartRevenueLabel">₺0</strong>
+          </div>
+
+          <div id="salesChart" class="apex-chart large"></div>
+        </div>
+
+        <div class="panel segment-panel">
+          <div class="panel-head">
+            <h3>Segment Dağılımı</h3>
+          </div>
+
+          <div id="segmentChart" class="apex-chart"></div>
+        </div>
+
+        <div class="panel city-panel">
+          <div class="panel-head">
+            <h3>Şehir Bazlı Satış <span>(İlk 5)</span></h3>
+            <select id="cityYearSelect"></select>
+          </div>
+
+          <div id="cityChart" class="apex-chart"></div>
+        </div>
+
+        <div class="panel channel-panel">
+          <div class="panel-head">
+            <h3>Kanal Bazlı Satış</h3>
+          </div>
+
+          <div id="channelChart" class="apex-chart"></div>
+        </div>
+
+        <div class="panel aov-panel">
+          <div class="panel-head">
+            <h3>Aylık Ortalama Sepet <span>(AOV)</span></h3>
+            <select id="aovYearSelect"></select>
+          </div>
+
+          <div id="aovChart" class="apex-chart"></div>
+        </div>
+
+        <div class="panel refund-panel">
+          <div class="panel-head">
+            <h3>İade Oranı Trendi <span>(%)</span></h3>
+            <select id="returnYearSelect"></select>
+          </div>
+
+          <div id="returnChart" class="apex-chart"></div>
+        </div>
+
+      </section>
+
+      <section class="bottom-grid">
+        <div class="panel risk-panel">
+          <div class="panel-head">
+            <h3>Risk Uyarıları <em>3</em></h3>
+            <a href="#">Tümünü Gör</a>
+          </div>
+
+          <div class="risk-list">
+            <div class="risk-item">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <p>Yüksek churn riskine sahip <span id="riskAlertCount">0</span> müşteri bulunmaktadır.</p>
+              <span>CRM verisinden</span>
+            </div>
+
+            <div class="risk-item">
+              <i class="fa-solid fa-arrow-down"></i>
+              <p>Kayıp segment oranı düzenli takip edilmelidir.</p>
+              <span>Segment analizi</span>
+            </div>
+
+            <div class="risk-item">
+              <i class="fa-solid fa-rotate-left"></i>
+              <p>İade oranı: <span id="refundAlertRate">%0</span></p>
+              <span>İade analizi</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel action-panel">
+          <div class="panel-head">
+            <h3>AI Aksiyon Önerileri</h3>
+            <a href="#">Detay</a>
+          </div>
+
+          <div class="action-list" id="dashboardAiActions">
+            <div class="action-item">
+              <div class="action-icon purple">
+                <i class="fa-solid fa-brain"></i>
+              </div>
+              <div>
+                <h4>AI önerileri hazırlanıyor</h4>
+                <p>Dashboard verileri analiz ediliyor.</p>
+              </div>
+              <button>Analiz</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/frontend/js/api.js"></script>
+  <script src="/frontend/js/login.js"></script>
+  <script src="/frontend/js/layout.js"></script>
+  <script src="/frontend/js/dashboard.js"></script>
+</body>
+</html>

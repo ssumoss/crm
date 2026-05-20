@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sporthink CRM - Sistem Yönetimi</title>
+
+  <link rel="stylesheet" href="../css/settings.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+
+<body class="dark-mode">
+  <div class="dashboard">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <h1>spor<span>think</span></h1>
+        <p>CRM SİSTEMİ</p>
+      </div>
+
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <nav class="menu">
+
+  <a href="dashboard.html" data-permission="dashboard_goruntule">
+    <i class="fa-solid fa-chart-line"></i>
+    <span>Özet</span>
+  </a>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-users"></i>
+      <span>Müşteri Yönetimi</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="customers.html" data-permission="musteri_goruntule">
+        <i class="fa-solid fa-user-group"></i>
+        <span>Müşteriler</span>
+      </a>
+
+      <a href="segment-history.html" data-permission="segment_gecmisi_goruntule">
+        <i class="fa-solid fa-timeline"></i>
+        <span>Segment Geçmişi</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-database"></i>
+      <span>Satış Verileri</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="invoices.html" data-permission="musteri_detay_goruntule">
+        <i class="fa-solid fa-file-invoice"></i>
+        <span>Faturalar</span>
+      </a>
+
+      <a href="products.html" data-permission="veri_import">
+        <i class="fa-solid fa-box"></i>
+        <span>Ürünler</span>
+      </a>
+
+      <a href="returns.html" data-permission="veri_import">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>İadeler</span>
+      </a>
+
+      <a href="channels.html" data-permission="veri_import">
+        <i class="fa-solid fa-store"></i>
+        <span>Satış Noktaları</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Analizler</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="rfm.html" data-permission="rfm_analizi_calistir">
+        <i class="fa-solid fa-ranking-star"></i>
+        <span>RFM Analizi</span>
+      </a>
+
+      <a href="analytics.html" data-permission="ltv_analizi_calistir">
+        <i class="fa-solid fa-chart-simple"></i>
+        <span>Analitik</span>
+      </a>
+
+      <a href="reports.html" data-permission="rapor_export">
+        <i class="fa-solid fa-file-export"></i>
+        <span>Raporlar</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>Yönetim</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="users-permissions.html" data-permission="kullanici_yonet">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Kullanıcı & Yetki</span>
+      </a>
+
+      <a href="logs-audit.html" data-permission="audit_log_goruntule">
+        <i class="fa-solid fa-clipboard-list"></i>
+        <span>Log & Denetim</span>
+      </a>
+
+      <a href="settings.html" data-permission="izin_yonet">
+        <i class="fa-solid fa-gear"></i>
+        <span>Ayarlar</span>
+      </a>
+    </div>
+  </div>
+
+  <a href="login.html">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span>Çıkış</span>
+  </a>
+
+</nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="hello">
+          <h2>Sistem Yönetimi</h2>
+          <p>Veri aktarımı, analiz çalıştırma, sistem sağlığı, kullanıcı özeti ve işlem geçmişini tek panelden yönet.</p>
+        </div>
+
+        <div class="top-right">
+          <button class="theme-btn" id="themeToggle">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+
+          <div class="notification-wrapper">
+            <button class="notification-btn" id="notificationBtn" title="Bildirimler">
+              <i class="fa-solid fa-bell"></i>
+              <span id="notificationBadge">0</span>
+            </button>
+
+            <div class="notification-dropdown" id="notificationDropdown">
+              <div class="dropdown-head">
+                <h4>Bildirimler</h4>
+                <button id="markAllReadBtn">Tümünü okundu yap</button>
+              </div>
+
+              <div id="notificationList" class="dropdown-list">
+                <p class="empty-text">Bildirim yok.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="notification-wrapper">
+            <button class="notification-btn" id="messageBtn" title="Ekip Mesajları">
+              <i class="fa-solid fa-envelope"></i>
+              <span id="messageBadge">0</span>
+            </button>
+
+            <div class="notification-dropdown message-dropdown" id="messageDropdown">
+              <div class="dropdown-head">
+                <h4>Ekip İçi İletişim</h4>
+                <button id="newMessageToggleBtn">Yeni Mesaj</button>
+              </div>
+
+              <div class="message-send-box hidden" id="newMessageBox">
+                <select id="messageUserSelect">
+                  <option value="">Alıcı kullanıcı seç</option>
+                </select>
+
+                <textarea id="messageText" placeholder="Mesaj yaz..."></textarea>
+
+                <button id="sendMessageBtn">
+                  <i class="fa-solid fa-paper-plane"></i>
+                  Gönder
+                </button>
+              </div>
+
+              <div id="messageList" class="dropdown-list">
+                <p class="empty-text">Mesaj yok.</p>
+              </div>
+
+              <div id="messageDetailBox" class="message-detail-box hidden">
+                <button id="backToMessagesBtn" class="back-message-btn">
+                  <i class="fa-solid fa-arrow-left"></i>
+                  Mesajlara dön
+                </button>
+
+                <h4 id="detailSenderName">Gönderen</h4>
+                <span id="detailMessageDate">Tarih</span>
+
+                <p id="detailMessageText">Mesaj içeriği</p>
+
+                <textarea id="replyMessageText" placeholder="Cevap yaz..."></textarea>
+
+                <button id="sendReplyBtn">
+                  <i class="fa-solid fa-reply"></i>
+                  Cevapla
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="user" id="userDropdownBtn">
+            <div class="avatar" id="userAvatar">K</div>
+            <div>
+              <strong id="topUserName">Kullanıcı</strong>
+              <span id="topUserRole">Rol</span>
+            </div>
+            <i class="fa-solid fa-chevron-down"></i>
+
+            <div class="user-menu" id="userMenu">
+              <button id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Çıkış Yap
+              </button>
+            </div>
+          </div>
+
+          <div class="date">
+            <i class="fa-regular fa-calendar"></i>
+            <span id="currentDateTime">Tarih yükleniyor...</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div>
+            <p>Aktif Kullanıcı</p>
+            <h3 id="userCount">0</h3>
+            <span class="neutral">Sistemi kullananlar</span>
+          </div>
+          <i class="fa-solid fa-users"></i>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>Roller</p>
+            <h3 id="roleCount">0</h3>
+            <span class="good">Tanımlı rol</span>
+          </div>
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>Yetkiler</p>
+            <h3 id="permissionCount">0</h3>
+            <span class="good">Aktif izin</span>
+          </div>
+          <i class="fa-solid fa-key"></i>
+        </div>
+
+        <div class="kpi-card danger">
+          <div>
+            <p>Sistem İşlemleri</p>
+            <h3 id="logCount">0</h3>
+            <span class="bad">Import + analiz logları</span>
+          </div>
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+      </section>
+
+      <section class="settings-grid">
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>CSV Import</h3>
+            <span>Backend</span>
+          </div>
+
+          <div class="upload-box" id="csvDropArea">
+            <i class="fa-solid fa-file-csv"></i>
+            <h4>CSV dosyanı seç</h4>
+            <p>Müşteri ve fatura verilerini CSV olarak içeri aktar.</p>
+
+            <input type="file" id="csvInput" accept=".csv" hidden />
+
+            <div class="upload-actions">
+              <button id="csvSelectBtn">CSV Seç</button>
+              <button id="csvUploadBtn" class="upload-start-btn hidden">Aktar</button>
+            </div>
+          </div>
+
+          <div class="selected-file" id="csvFileInfo">Henüz dosya seçilmedi.</div>
+
+          <div class="upload-progress hidden" id="csvProgressBox">
+            <div class="upload-progress-head">
+              <span>CSV aktarılıyor...</span>
+              <strong id="csvProgressText">0%</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="csvProgressFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>JSON Import</h3>
+            <span>Backend</span>
+          </div>
+
+          <div class="upload-box" id="jsonDropArea">
+            <i class="fa-solid fa-code"></i>
+            <h4>JSON dosyanı seç</h4>
+            <p>Müşteri ve fatura verilerini JSON formatında içeri aktar.</p>
+
+            <input type="file" id="jsonInput" accept=".json" hidden />
+
+            <div class="upload-actions">
+              <button id="jsonSelectBtn">JSON Seç</button>
+              <button id="jsonUploadBtn" class="upload-start-btn hidden">Aktar</button>
+            </div>
+          </div>
+
+          <div class="selected-file" id="jsonFileInfo">Henüz dosya seçilmedi.</div>
+
+          <div class="upload-progress hidden" id="jsonProgressBox">
+            <div class="upload-progress-head">
+              <span>JSON aktarılıyor...</span>
+              <strong id="jsonProgressText">0%</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="jsonProgressFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Analiz Kontrol Merkezi</h3>
+            <span>API</span>
+          </div>
+
+          <div class="analysis-actions">
+            <button class="analysis-btn" id="runRfmBtn">
+              <i class="fa-solid fa-ranking-star"></i>
+              <div>
+                <strong>RFM Analizi</strong>
+                <span>Müşteri segmentlerini günceller</span>
+              </div>
+              <em>Başlat</em>
+            </button>
+
+            <button class="analysis-btn" id="runChurnBtn">
+              <i class="fa-solid fa-user-xmark"></i>
+              <div>
+                <strong>Churn Analizi</strong>
+                <span>Kaybetme riski hesaplar</span>
+              </div>
+              <em>Başlat</em>
+            </button>
+
+            <button class="analysis-btn" id="runLtvBtn">
+              <i class="fa-solid fa-sack-dollar"></i>
+              <div>
+                <strong>LTV Analizi</strong>
+                <span>Müşteri yaşam boyu değerini hesaplar</span>
+              </div>
+              <em>Başlat</em>
+            </button>
+
+            <button class="analysis-btn" id="runSegmentHistoryBtn">
+              <i class="fa-solid fa-timeline"></i>
+              <div>
+                <strong>Segment Geçmişi</strong>
+                <span>Segment değişim geçmişini üretir</span>
+              </div>
+              <em>Başlat</em>
+            </button>
+          </div>
+
+          <div class="selected-file" id="analysisStatusText">Analiz işlemi bekleniyor.</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Sistem Sağlığı</h3>
+            <span>Canlı</span>
+          </div>
+
+          <div class="api-list" id="apiStatusList">
+            <div class="api-item">
+              <i class="fa-solid fa-spinner"></i>
+              <div>
+                <h4>Sistem durumu yükleniyor</h4>
+                <p>Backend bağlantısı kontrol ediliyor.</p>
+              </div>
+              <span class="status passive">Bekle</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <section class="table-grid">
+
+        <div class="table-panel">
+          <div class="table-head">
+            <div>
+              <h3>Kullanıcı Listesi</h3>
+              <p>Sistemi kullanan kullanıcılar ve rolleri.</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Kullanıcı</th>
+                  <th>Mail</th>
+                  <th>Rol</th>
+                  <th>Durum</th>
+                </tr>
+              </thead>
+
+              <tbody id="userTableBody">
+                <tr>
+                  <td colspan="4">Kullanıcılar yükleniyor...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-panel">
+          <div class="table-head">
+            <div>
+              <h3>Son Sistem İşlemleri</h3>
+              <p>Import ve analiz işlemlerinin son kayıtları.</p>
+            </div>
+          </div>
+
+          <div class="log-list" id="importLogList">
+            <div class="log-item">
+              <i class="fa-solid fa-spinner"></i>
+              <div>
+                <h4>İşlem logları yükleniyor</h4>
+                <p>Backend’den son kayıtlar alınıyor.</p>
+              </div>
+              <strong>Bekle</strong>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/settings.js"></script>
+</body>
+</html>

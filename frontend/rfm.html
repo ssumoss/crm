@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sporthink CRM - RFM Analizi</title>
+
+  <link rel="stylesheet" href="/frontend/css/rfm.css" />
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+
+<body class="dark-mode">
+
+  <div class="dashboard">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <h1>spor<span>think</span></h1>
+        <p>CRM SİSTEMİ</p>
+      </div>
+
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <nav class="menu">
+
+  <a href="dashboard.html" data-permission="dashboard_goruntule">
+    <i class="fa-solid fa-chart-line"></i>
+    <span>Özet</span>
+  </a>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-users"></i>
+      <span>Müşteri Yönetimi</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="customers.html" data-permission="musteri_goruntule">
+        <i class="fa-solid fa-user-group"></i>
+        <span>Müşteriler</span>
+      </a>
+
+      <a href="segment-history.html" data-permission="segment_gecmisi_goruntule">
+        <i class="fa-solid fa-timeline"></i>
+        <span>Segment Geçmişi</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-database"></i>
+      <span>Satış Verileri</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="invoices.html" data-permission="musteri_detay_goruntule">
+        <i class="fa-solid fa-file-invoice"></i>
+        <span>Faturalar</span>
+      </a>
+
+      <a href="products.html" data-permission="veri_import">
+        <i class="fa-solid fa-box"></i>
+        <span>Ürünler</span>
+      </a>
+
+      <a href="returns.html" data-permission="veri_import">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>İadeler</span>
+      </a>
+
+      <a href="channels.html" data-permission="veri_import">
+        <i class="fa-solid fa-store"></i>
+        <span>Satış Noktaları</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Analizler</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="rfm.html" data-permission="rfm_analizi_calistir">
+        <i class="fa-solid fa-ranking-star"></i>
+        <span>RFM Analizi</span>
+      </a>
+
+      <a href="analytics.html" data-permission="ltv_analizi_calistir">
+        <i class="fa-solid fa-chart-simple"></i>
+        <span>Analitik</span>
+      </a>
+
+      <a href="reports.html" data-permission="rapor_export">
+        <i class="fa-solid fa-file-export"></i>
+        <span>Raporlar</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>Yönetim</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="users-permissions.html" data-permission="kullanici_yonet">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Kullanıcı & Yetki</span>
+      </a>
+
+      <a href="logs-audit.html" data-permission="audit_log_goruntule">
+        <i class="fa-solid fa-clipboard-list"></i>
+        <span>Log & Denetim</span>
+      </a>
+
+      <a href="settings.html" data-permission="izin_yonet">
+        <i class="fa-solid fa-gear"></i>
+        <span>Ayarlar</span>
+      </a>
+    </div>
+  </div>
+
+  <a href="login.html">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span>Çıkış</span>
+  </a>
+
+</nav>
+    </aside>
+
+    <main class="main">
+
+      <header class="topbar">
+        <div class="hello">
+          <h2>RFM Analizi</h2>
+          <p>Müşterilerin recency, frequency ve monetary değerlerine göre segment performansını analiz et.</p>
+        </div>
+
+        <div class="top-right">
+          <div class="search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="rfmSearchInput" placeholder="Segment veya müşteri ara..." />
+            <div id="rfmSearchResults" class="search-results"></div>
+          </div>
+
+          <button class="theme-btn" id="themeToggle">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+
+          <div class="notification-wrapper">
+            <button class="notification-btn" id="notificationBtn" title="Bildirimler">
+              <i class="fa-solid fa-bell"></i>
+              <span id="notificationBadge">0</span>
+            </button>
+
+            <div class="notification-dropdown" id="notificationDropdown">
+              <div class="dropdown-head">
+                <h4>Bildirimler</h4>
+                <button id="markAllReadBtn">Tümünü okundu yap</button>
+              </div>
+
+              <div id="notificationList" class="dropdown-list">
+                <p class="empty-text">Bildirim yok.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="notification-wrapper">
+            <button class="notification-btn" id="messageBtn" title="Ekip Mesajları">
+              <i class="fa-solid fa-envelope"></i>
+              <span id="messageBadge">0</span>
+            </button>
+
+            <div class="notification-dropdown message-dropdown" id="messageDropdown">
+              <div class="dropdown-head">
+                <h4>Ekip İçi İletişim</h4>
+                <button id="newMessageToggleBtn">Yeni Mesaj</button>
+              </div>
+
+              <div class="message-send-box hidden" id="newMessageBox">
+                <select id="messageUserSelect">
+                  <option value="">Alıcı kullanıcı seç</option>
+                </select>
+
+                <textarea id="messageText" placeholder="Mesaj yaz..."></textarea>
+
+                <button id="sendMessageBtn">
+                  <i class="fa-solid fa-paper-plane"></i>
+                  Gönder
+                </button>
+              </div>
+
+              <div id="messageList" class="dropdown-list">
+                <p class="empty-text">Mesaj yok.</p>
+              </div>
+
+              <div id="messageDetailBox" class="message-detail-box hidden">
+                <button id="backToMessagesBtn" class="back-message-btn">
+                  <i class="fa-solid fa-arrow-left"></i>
+                  Mesajlara dön
+                </button>
+
+                <h4 id="detailSenderName">Gönderen</h4>
+                <span id="detailMessageDate">Tarih</span>
+
+                <p id="detailMessageText">Mesaj içeriği</p>
+
+                <textarea id="replyMessageText" placeholder="Cevap yaz..."></textarea>
+
+                <button id="sendReplyBtn">
+                  <i class="fa-solid fa-reply"></i>
+                  Cevapla
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="user" id="userDropdownBtn">
+            <div class="avatar" id="userAvatar">K</div>
+            <div>
+              <strong id="topUserName">Kullanıcı</strong>
+              <span id="topUserRole">Rol</span>
+            </div>
+            <i class="fa-solid fa-chevron-down"></i>
+
+            <div class="user-menu" id="userMenu">
+              <button id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Çıkış Yap
+              </button>
+            </div>
+          </div>
+
+          <div class="date">
+            <i class="fa-regular fa-calendar"></i>
+            <span id="currentDateTime">Tarih yükleniyor...</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div>
+            <p>Ortalama Recency</p>
+            <h3>0 Gün</h3>
+            <span class="good">Müşteri son sipariş ortalaması</span>
+          </div>
+          <i class="fa-solid fa-clock"></i>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>Ortalama Frequency</p>
+            <h3>0</h3>
+            <span class="good">Müşteri başına sipariş</span>
+          </div>
+          <i class="fa-solid fa-repeat"></i>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>Ortalama Monetary</p>
+            <h3>₺0</h3>
+            <span class="good">Ortalama harcama</span>
+          </div>
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>Segment Sayısı</p>
+            <h3>0</h3>
+            <span class="neutral">Aktif RFM segmenti</span>
+          </div>
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+      </section>
+
+      <section class="alert-grid">
+        <div class="alert-card red-alert">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>
+            <h4>Risk Altında segmenti</h4>
+            <p>Risk segmentindeki müşteri sayısı hesaplanıyor.</p>
+          </div>
+        </div>
+
+        <div class="alert-card red-alert">
+          <i class="fa-solid fa-arrow-trend-up"></i>
+          <div>
+            <h4>Kayıp müşteri uyarısı</h4>
+            <p>Kayıp segmentindeki müşteri sayısı hesaplanıyor.</p>
+          </div>
+        </div>
+
+        <div class="alert-card yellow-alert">
+          <i class="fa-solid fa-arrow-down"></i>
+          <div>
+            <h4>Sadık müşteri korunmalı</h4>
+            <p>Sadık müşteri segmenti takip ediliyor.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="chart-grid">
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>RFM Segment Dağılımı</h3>
+            <button>Güncel</button>
+          </div>
+
+          <div id="segmentDonutChart" class="apex-chart"></div>
+        </div>
+
+        <div class="panel heatmap-panel">
+          <div class="panel-head">
+            <h3>5x5 RFM Heatmap</h3>
+            <button>Skor Matrisi</button>
+          </div>
+
+          <div class="heatmap-wrap">
+            <div class="heatmap-label y-label">Frequency</div>
+            <div class="heatmap" id="heatmap"></div>
+            <div class="x-label">Recency</div>
+          </div>
+        </div>
+
+        <div class="panel wide">
+          <div class="panel-head">
+            <h3>Segment Bazlı Müşteri Sayısı</h3>
+            <button>Güncel</button>
+          </div>
+
+          <div id="segmentBarChart" class="apex-chart tall"></div>
+        </div>
+
+        <div class="panel wide">
+          <div class="panel-head">
+            <h3>Segment Geçiş Grafiği</h3>
+            <select id="transitionYearSelect">
+              <option value="2023">2023</option>
+              <option value="2024">2024</option>
+              <option value="2025" selected>2025</option>
+            </select>
+          </div>
+
+          <div id="yearlyTransitionChart" class="apex-chart tall">
+            <p class="empty-year">Segment geçiş verisi yükleniyor...</p>
+          </div>
+        </div>
+
+      </section>
+
+      <section class="extra-grid">
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Segment Geçiş Analizi</h3>
+            <a href="segment-history.html">Detay</a>
+          </div>
+
+          <div class="transition-list">
+            <div class="transition-item">
+              <i class="fa-solid fa-arrow-right-arrow-left"></i>
+              <div>
+                <h4>Risk Altında Değişimi</h4>
+                <p>Yıllara göre risk segmenti hesaplanıyor.</p>
+              </div>
+            </div>
+
+            <div class="transition-item">
+              <i class="fa-solid fa-arrow-trend-down"></i>
+              <div>
+                <h4>Kayıp Segment Değişimi</h4>
+                <p>Yıllara göre kayıp segmenti hesaplanıyor.</p>
+              </div>
+            </div>
+
+            <div class="transition-item positive">
+              <i class="fa-solid fa-arrow-trend-up"></i>
+              <div>
+                <h4>Şampiyon Segment Değişimi</h4>
+                <p>Yıllara göre şampiyon segmenti hesaplanıyor.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel ai-actions-panel">
+          <div class="panel-head">
+            <div>
+              <h3>
+                <i class="fa-solid fa-brain"></i>
+                AI Aksiyon Önerileri
+              </h3>
+              <p id="rfmAiSourceText" class="ai-source-text">RFM verilerine göre hazırlanıyor</p>
+            </div>
+            <button type="button" onclick="loadRfmAiActions()">Yenile</button>
+          </div>
+
+          <div class="action-list" id="rfmAiActions">
+            <div class="ai-loading-card">
+              <i class="fa-solid fa-brain"></i>
+              <div>
+                <h4>AI önerileri hazırlanıyor</h4>
+                <p>RFM segmentleri analiz edilerek aksiyon önerileri oluşturuluyor.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="/frontend/js/api.js"></script>
+  <script src="/frontend/js/layout.js"></script>
+  <script src="/frontend/js/rfm.js"></script>
+</body>
+</html>

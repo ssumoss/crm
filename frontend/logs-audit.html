@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sporthink CRM - Log & Denetim</title>
+
+  <link rel="stylesheet" href="../css/logs-audit.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+
+<body class="dark-mode">
+  <div class="dashboard">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <h1>spor<span>think</span></h1>
+        <p>CRM SİSTEMİ</p>
+      </div>
+
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <nav class="menu">
+
+  <a href="dashboard.html" data-permission="dashboard_goruntule">
+    <i class="fa-solid fa-chart-line"></i>
+    <span>Özet</span>
+  </a>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-users"></i>
+      <span>Müşteri Yönetimi</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="customers.html" data-permission="musteri_goruntule">
+        <i class="fa-solid fa-user-group"></i>
+        <span>Müşteriler</span>
+      </a>
+
+      <a href="segment-history.html" data-permission="segment_gecmisi_goruntule">
+        <i class="fa-solid fa-timeline"></i>
+        <span>Segment Geçmişi</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-database"></i>
+      <span>Satış Verileri</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="invoices.html" data-permission="musteri_detay_goruntule">
+        <i class="fa-solid fa-file-invoice"></i>
+        <span>Faturalar</span>
+      </a>
+
+      <a href="products.html" data-permission="veri_import">
+        <i class="fa-solid fa-box"></i>
+        <span>Ürünler</span>
+      </a>
+
+      <a href="returns.html" data-permission="veri_import">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>İadeler</span>
+      </a>
+
+      <a href="channels.html" data-permission="veri_import">
+        <i class="fa-solid fa-store"></i>
+        <span>Satış Noktaları</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Analizler</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="rfm.html" data-permission="rfm_analizi_calistir">
+        <i class="fa-solid fa-ranking-star"></i>
+        <span>RFM Analizi</span>
+      </a>
+
+      <a href="analytics.html" data-permission="ltv_analizi_calistir">
+        <i class="fa-solid fa-chart-simple"></i>
+        <span>Analitik</span>
+      </a>
+
+      <a href="reports.html" data-permission="rapor_export">
+        <i class="fa-solid fa-file-export"></i>
+        <span>Raporlar</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-group">
+    <button type="button" class="menu-group-title">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>Yönetim</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </button>
+
+    <div class="submenu">
+      <a href="users-permissions.html" data-permission="kullanici_yonet">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Kullanıcı & Yetki</span>
+      </a>
+
+      <a href="logs-audit.html" data-permission="audit_log_goruntule">
+        <i class="fa-solid fa-clipboard-list"></i>
+        <span>Log & Denetim</span>
+      </a>
+
+      <a href="settings.html" data-permission="izin_yonet">
+        <i class="fa-solid fa-gear"></i>
+        <span>Ayarlar</span>
+      </a>
+    </div>
+  </div>
+
+  <a href="login.html">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span>Çıkış</span>
+  </a>
+
+</nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="hello">
+          <h2>Log & Denetim</h2>
+          <p>Giriş kayıtları, işlem geçmişi, hata logları ve anormal hareketleri takip et.</p>
+        </div>
+
+        <div class="top-right">
+          <div class="search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="logSearch" type="text" placeholder="Kullanıcı, işlem, hata veya IP ara..." />
+          </div>
+
+          <button class="theme-btn" id="themeToggle">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+
+          <div class="notification-wrapper">
+            <button class="notification-btn" id="notificationBtn" title="Bildirimler">
+              <i class="fa-solid fa-bell"></i>
+              <span id="notificationBadge">0</span>
+            </button>
+
+            <div class="notification-dropdown" id="notificationDropdown">
+              <div class="dropdown-head">
+                <h4>Bildirimler</h4>
+                <button id="markAllReadBtn">Tümünü okundu yap</button>
+              </div>
+
+              <div id="notificationList" class="dropdown-list">
+                <p class="empty-text">Bildirim yok.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="notification-wrapper">
+            <button class="notification-btn" id="messageBtn" title="Ekip Mesajları">
+              <i class="fa-solid fa-envelope"></i>
+              <span id="messageBadge">0</span>
+            </button>
+
+            <div class="notification-dropdown message-dropdown" id="messageDropdown">
+              <div class="dropdown-head">
+                <h4>Ekip İçi İletişim</h4>
+                <button id="newMessageToggleBtn">Yeni Mesaj</button>
+              </div>
+
+              <div class="message-send-box hidden" id="newMessageBox">
+                <select id="messageUserSelect">
+                  <option value="">Alıcı kullanıcı seç</option>
+                </select>
+
+                <textarea id="messageText" placeholder="Mesaj yaz..."></textarea>
+
+                <button id="sendMessageBtn">
+                  <i class="fa-solid fa-paper-plane"></i>
+                  Gönder
+                </button>
+              </div>
+
+              <div id="messageList" class="dropdown-list">
+                <p class="empty-text">Mesaj yok.</p>
+              </div>
+
+              <div id="messageDetailBox" class="message-detail-box hidden">
+                <button id="backToMessagesBtn" class="back-message-btn">
+                  <i class="fa-solid fa-arrow-left"></i>
+                  Mesajlara dön
+                </button>
+
+                <h4 id="detailSenderName">Gönderen</h4>
+                <span id="detailMessageDate">Tarih</span>
+
+                <p id="detailMessageText">Mesaj içeriği</p>
+
+                <textarea id="replyMessageText" placeholder="Cevap yaz..."></textarea>
+
+                <button id="sendReplyBtn">
+                  <i class="fa-solid fa-reply"></i>
+                  Cevapla
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="user" id="userDropdownBtn">
+            <div class="avatar" id="userAvatar">K</div>
+            <div>
+              <strong id="topUserName">Kullanıcı</strong>
+              <span id="topUserRole">Rol</span>
+            </div>
+            <i class="fa-solid fa-chevron-down"></i>
+
+            <div class="user-menu" id="userMenu">
+              <button id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Çıkış Yap
+              </button>
+            </div>
+          </div>
+
+          <div class="date">
+            <i class="fa-regular fa-calendar"></i>
+            <span id="currentDateTime">Tarih yükleniyor...</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div>
+            <p>Bugünkü Giriş Sayısı</p>
+            <h3 id="todayLoginCount">0</h3>
+            <span class="good">Başarılı + başarısız</span>
+          </div>
+          <i class="fa-solid fa-right-to-bracket"></i>
+        </div>
+
+        <div class="kpi-card danger">
+          <div>
+            <p>Başarısız Giriş Sayısı</p>
+            <h3 id="failedLoginCount">0</h3>
+            <span class="bad">Güvenlik uyarısı</span>
+          </div>
+          <i class="fa-solid fa-user-lock"></i>
+        </div>
+
+        <div class="kpi-card danger">
+          <div>
+            <p>Hata Sayısı</p>
+            <h3 id="errorCount">0</h3>
+            <span class="bad">Sistem hataları</span>
+          </div>
+          <i class="fa-solid fa-bug"></i>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <p>İşlem Kayıtları</p>
+            <h3 id="actionCount">0</h3>
+            <span class="neutral">Denetim izi</span>
+          </div>
+          <i class="fa-solid fa-clipboard-list"></i>
+        </div>
+      </section>
+
+      <section class="alert-grid" id="anomalyAlerts"></section>
+
+      <section class="filter-panel">
+        <div class="filter-group">
+          <label>Log Türü</label>
+          <select id="typeFilter">
+            <option value="all">Tümü</option>
+            <option value="Giriş">Giriş</option>
+            <option value="İşlem">İşlem</option>
+            <option value="Hata">Hata</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Durum</label>
+          <select id="statusFilter">
+            <option value="all">Tümü</option>
+            <option value="Başarılı">Başarılı</option>
+            <option value="Başarısız">Başarısız</option>
+            <option value="Kritik">Kritik</option>
+          </select>
+        </div>
+
+        <button class="export-btn" id="exportBtn">
+          <i class="fa-solid fa-file-export"></i>
+          Log Export
+        </button>
+      </section>
+
+      <section class="chart-grid">
+        <div class="panel wide">
+          <div class="panel-head">
+            <h3>Hata Analiz Dashboard</h3>
+            <button>Son Günler</button>
+          </div>
+
+          <div id="errorChart" class="apex-chart"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Log Türü Dağılımı</h3>
+            <button>Genel</button>
+          </div>
+
+          <div id="logTypeChart" class="apex-chart"></div>
+        </div>
+
+        <div class="panel wide">
+          <div class="panel-head">
+            <h3>Kullanıcı Bazlı İşlem Geçmişi</h3>
+            <button>Kullanıcı</button>
+          </div>
+
+          <div id="userActionChart" class="apex-chart"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Anormal Hareket Tespiti</h3>
+            <span>Basit kural</span>
+          </div>
+
+          <div class="insight-list" id="anomalyList"></div>
+        </div>
+      </section>
+
+      <section class="table-panel">
+        <div class="table-head">
+          <div>
+            <h3>Log Kayıtları</h3>
+            <p id="logCountText">0 kayıt listeleniyor</p>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Tarih</th>
+                <th>Kullanıcı</th>
+                <th>Log Türü</th>
+                <th>İşlem / Mesaj</th>
+                <th>IP Adresi</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+
+            <tbody id="logTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="extra-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Son Hata Kayıtları</h3>
+            <a href="#">Detay</a>
+          </div>
+
+          <div class="insight-list" id="errorList"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Denetim Özeti</h3>
+            <span>Audit</span>
+          </div>
+
+          <div class="score-box">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h4>Log & denetim aktif</h4>
+            <p>
+              Kullanıcı girişleri, işlem kayıtları, yetkisiz erişimler ve hata logları sistem güvenliği için izlenir.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/logs-audit.js"></script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sporthink CRM - Giriş</title>
+
+  <link rel="stylesheet" href="/frontend/css/login.css" />
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+</head>
+
+<body data-theme="dark">
+
+  <div class="login-page">
+
+    <div class="left-panel">
+
+      <div class="brand-area">
+        <img src="/frontend/images/logo.png" alt="Sporthink Logo" class="brand-logo" />
+        <p class="brand-subtitle">CRM SİSTEMİ</p>
+      </div>
+
+      <div class="hero-content">
+        <h1>Performansını <span>veriyle yönet.</span></h1>
+
+        <p>
+          Müşterini tanı, segmentleri analiz et,
+          churn riskini gör ve doğru aksiyonu zamanında al.
+        </p>
+
+        <div class="feature-list">
+          <div class="feature-card">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Analiz Et</span>
+          </div>
+
+          <div class="feature-card">
+            <i class="fa-solid fa-bullseye"></i>
+            <span>Odaklan</span>
+          </div>
+
+          <div class="feature-card">
+            <i class="fa-solid fa-arrow-trend-up"></i>
+            <span>Büyüt</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-showcase">
+
+        <img
+          src="/frontend/images/bag.png"
+          alt="Spor Çanta"
+          class="product-card product-bag"
+        />
+
+        <img
+          src="/frontend/images/sneakers.png"
+          alt="Spor Ayakkabı"
+          class="product-card product-shoe"
+        />
+
+        <img
+          src="/frontend/images/ball.png"
+          alt="Basketbol Topu"
+          class="product-card product-gear"
+        />
+
+      </div>
+
+    </div>
+
+    <div class="right-panel">
+
+      <div class="top-actions">
+        <button id="themeToggle" class="theme-toggle" type="button">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      </div>
+
+      <div class="form-wrapper">
+
+        <img src="images/logo.png" alt="Logo" class="mobile-logo" />
+
+        <h2>Hoş Geldiniz</h2>
+        <p class="form-desc">Hesabınıza giriş yapın</p>
+
+        <form id="loginForm">
+
+          <div class="input-group">
+            <span class="input-icon">
+              <i class="fa-solid fa-user"></i>
+            </span>
+
+            <input
+              type="email"
+              id="username"
+              placeholder="E-posta"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+          <div class="input-group">
+            <span class="input-icon">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+
+            <input
+              type="password"
+              id="password"
+              placeholder="Şifre"
+              autocomplete="current-password"
+              required
+            />
+
+            <button type="button" class="eye-btn" id="togglePassword">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+
+          <div class="form-options">
+
+            <label class="remember-me">
+              <input type="checkbox" id="rememberMe" />
+              <span>Beni hatırla</span>
+            </label>
+
+            <a href="forgot.html" class="forgot-link">
+              Şifremi unuttum?
+            </a>
+
+          </div>
+
+          <button type="submit" class="login-btn" id="loginBtn">
+            Giriş Yap
+          </button>
+
+        </form>
+
+        <div class="bottom-info">
+
+          <div class="mini-info">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Güvenli</span>
+          </div>
+
+          <div class="mini-info">
+            <i class="fa-solid fa-database"></i>
+            <span>Veri Koruma</span>
+          </div>
+
+          <div class="mini-info">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>CRM Analiz</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="/frontend/js/login.js"></script>
+</body>
+</html>
