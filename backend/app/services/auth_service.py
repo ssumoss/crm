@@ -7,55 +7,42 @@ from app.utils.security import verify_password
 from app.utils.jwt_handler import create_access_token
 
 
-def login_user(db: Session, email: str, password: str, ip_adresi: str | None = None):
-    user = db.query(Kullanicilar).filter(Kullanicilar.email == email).first()
-
-    if not user:
+def safe_login_log(db, kullanici_id, email, basarili_mi, ip_adresi, hata_mesaji):
+    try:
         log = GirisLoglari(
-            kullanici_id=None,
+            kullanici_id=kullanici_id,
             email=email,
-            basarili_mi=False,
+            basarili_mi=basarili_mi,
             ip_adresi=ip_adresi,
-            hata_mesaji="Kullanıcı bulunamadı",
+            hata_mesaji=hata_mesaji,
             giris_tarihi=datetime.now()
         )
         db.add(log)
         db.commit()
+    except Exception as e:
+        db.rollback()
+        print("LOGIN LOG HATASI:", str(e))
 
+
+def login_user(db: Session, email: str, password: str, ip_adresi: str | None = None):
+    user = db.query(Kullanicilar).filter(Kullanicilar.email == email).first()
+
+    if not user:
+        safe_login_log(db, None, email, False, ip_adresi, "Kullanıcı bulunamadı")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email veya şifre hatalı"
         )
 
     if not user.aktif_mi:
-        log = GirisLoglari(
-            kullanici_id=user.kullanici_id,
-            email=email,
-            basarili_mi=False,
-            ip_adresi=ip_adresi,
-            hata_mesaji="Kullanıcı pasif",
-            giris_tarihi=datetime.now()
-        )
-        db.add(log)
-        db.commit()
-
+        safe_login_log(db, user.kullanici_id, email, False, ip_adresi, "Kullanıcı pasif")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Kullanıcı hesabı pasif"
         )
 
     if not verify_password(password, user.sifre_hash):
-        log = GirisLoglari(
-            kullanici_id=user.kullanici_id,
-            email=email,
-            basarili_mi=False,
-            ip_adresi=ip_adresi,
-            hata_mesaji="Şifre hatalı",
-            giris_tarihi=datetime.now()
-        )
-        db.add(log)
-        db.commit()
-
+        safe_login_log(db, user.kullanici_id, email, False, ip_adresi, "Şifre hatalı")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email veya şifre hatalı"
@@ -72,18 +59,7 @@ def login_user(db: Session, email: str, password: str, ip_adresi: str | None = N
 
     access_token = create_access_token(token_data)
 
-    log = GirisLoglari(
-        kullanici_id=user.kullanici_id,
-        email=email,
-        basarili_mi=True,
-        ip_adresi=ip_adresi,
-        hata_mesaji=None,
-        giris_tarihi=datetime.now()
-    )
-
-    db.add(log)
-    db.commit()
-    db.refresh(user)
+    safe_login_log(db, user.kullanici_id, email, True, ip_adresi, None)
 
     return {
         "access_token": access_token,
