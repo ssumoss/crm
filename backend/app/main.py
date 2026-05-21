@@ -12,7 +12,10 @@ from app.routers import (
 # 🔥 DB oluştur
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="CRM & Müşteri Deneyimi Analitik Platformu")
+app = FastAPI(
+    title="CRM & Müşteri Deneyimi Analitik Platformu",
+    debug=True
+)
 
 # 🔥 CORS AYARI (EN ÖNEMLİ)
 app.add_middleware(
