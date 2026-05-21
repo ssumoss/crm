@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://crm-backend-s1h3.onrender.com";
 
 const body = document.body;
 const themeToggle = document.getElementById("themeToggle");
