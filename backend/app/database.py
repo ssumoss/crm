@@ -1,7 +1,11 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "mysql+pymysql://root:@localhost/crm"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL = mysql+pymysql://root:şifre@host:port/railway")
 
 engine = create_engine(DATABASE_URL)
 
@@ -13,7 +17,6 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
-# 🔥 BUNU EKLE
 def get_db():
     db = SessionLocal()
     try:
