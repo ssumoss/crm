@@ -9,3 +9,5 @@ python-multipart
 pandas
 evds
 email-validator
+google-generativeai
+google-api-python-client
