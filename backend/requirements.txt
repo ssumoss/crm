@@ -4,6 +4,7 @@ sqlalchemy
 pymysql
 python-dotenv
 python-jose
+bcrypt==4.0.1
 passlib[bcrypt]
 python-multipart
 pandas
@@ -11,3 +12,4 @@ evds
 email-validator
 google-generativeai
 google-api-python-client
+setuptools
