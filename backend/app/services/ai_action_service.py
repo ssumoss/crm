@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from google import genai
+import google.generativeai as genai
 
 from app.services.dashboard_service import get_dashboard_summary_service
 
