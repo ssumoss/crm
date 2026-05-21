@@ -2,24 +2,32 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
-from app.routers import import_data, customers, dashboard, export, analytics, tufe, auth, users, segment_history, segments, permissions, roles, invoices, products, returns, channels, logs, settings, notifications, messages, ai_actions
-# DB oluştur
+from app.routers import (
+    import_data, customers, dashboard, export, analytics, tufe, auth,
+    users, segment_history, segments, permissions, roles, invoices,
+    products, returns, channels, logs, settings, notifications,
+    messages, ai_actions
+)
+
+# 🔥 DB oluştur
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="CRM & Müşteri Deneyimi Analitik Platformu")
 
+# 🔥 CORS AYARI (EN ÖNEMLİ)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://127.0.0.1:5500",
-        "http://localhost:5500"
+        "http://localhost:5500",
+        "https://crm-psi-nine-84.vercel.app"  # 👈 BURASI KRİTİK
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ROUTERLAR
+# 🔥 ROUTERLAR
 app.include_router(import_data.router)
 app.include_router(customers.router)
 app.include_router(dashboard.router)
