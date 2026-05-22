@@ -1128,3 +1128,41 @@ body.light-mode .filter-group input[type="date"] {
     grid-column: span 1;
   }
 }
+.filter-panel {
+  display: flex;
+  flex-wrap: nowrap; /* alta inmesin */
+  gap: 10px;
+  overflow-x: auto; /* taşarsa sağa scroll */
+  padding-bottom: 5px;
+}
+
+.filter-group {
+  min-width: 140px; /* küçült */
+  flex: 0 0 auto;
+}
+
+.filter-group label {
+  font-size: 12px;
+}
+
+.filter-group input,
+.filter-group select {
+  height: 36px; /* küçült */
+  font-size: 13px;
+  padding: 0 8px;
+  border-radius: 8px;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+
+.export-btn,
+.campaign-btn {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: 10px;
+}
