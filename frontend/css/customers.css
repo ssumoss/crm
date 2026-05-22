@@ -1166,3 +1166,32 @@ body.light-mode .filter-group input[type="date"] {
   font-size: 13px;
   border-radius: 10px;
 }
+/* Scroll alanı */
+.filter-panel {
+  overflow-x: auto;
+}
+
+/* Chrome, Edge, Safari */
+.filter-panel::-webkit-scrollbar {
+  height: 6px; /* incelt */
+}
+
+.filter-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.filter-panel::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #ff2525, #d9141c);
+  border-radius: 10px;
+}
+
+/* hover efekti */
+.filter-panel::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #ff3b3b, #ff2525);
+}
+
+/* Firefox */
+.filter-panel {
+  scrollbar-color: #ff2525 transparent;
+  scrollbar-width: thin;
+}
