@@ -1,6 +1,12 @@
 const segmentSearch = document.getElementById("segmentSearch");
 const transitionFilter = document.getElementById("transitionFilter");
 const yearFilter = document.getElementById("yearFilter");
+const oldSegmentFilter = document.getElementById("oldSegmentFilter");
+const newSegmentFilter = document.getElementById("newSegmentFilter");
+const minRfmFilter = document.getElementById("minRfmFilter");
+const maxRfmFilter = document.getElementById("maxRfmFilter");
+const startDateFilter = document.getElementById("startDateFilter");
+const endDateFilter = document.getElementById("endDateFilter");
 const exportBtn = document.getElementById("exportBtn");
 
 const totalHistory = document.getElementById("totalHistory");
@@ -24,7 +30,6 @@ let filteredHistory = [];
 let currentPage = 1;
 const pageLimit = 50;
 let totalPages = 1;
-
 let searchTimer = null;
 
 const segmentRank = {
@@ -92,19 +97,66 @@ function formatDate(value) {
   return date.toLocaleDateString("tr-TR");
 }
 
+function getCurrentFilters() {
+  return {
+    search: segmentSearch?.value.trim() || "",
+    year: yearFilter?.value || "all",
+    transition: transitionFilter?.value || "all",
+    old_segment: oldSegmentFilter?.value || "all",
+    new_segment: newSegmentFilter?.value || "all",
+    min_rfm: Number(minRfmFilter?.value || 0),
+    max_rfm: Number(maxRfmFilter?.value || 0),
+    start_date: startDateFilter?.value || "",
+    end_date: endDateFilter?.value || ""
+  };
+}
+
+function buildSegmentHistoryQuery() {
+  const filters = getCurrentFilters();
+  const params = new URLSearchParams();
+
+  if (filters.search) params.append("search", filters.search);
+  if (filters.year !== "all") params.append("year", filters.year);
+  if (filters.transition !== "all") params.append("transition", filters.transition);
+  if (filters.old_segment !== "all") params.append("old_segment", filters.old_segment);
+  if (filters.new_segment !== "all") params.append("new_segment", filters.new_segment);
+  if (filters.min_rfm > 0) params.append("min_rfm", filters.min_rfm);
+  if (filters.max_rfm > 0) params.append("max_rfm", filters.max_rfm);
+  if (filters.start_date) params.append("start_date", filters.start_date);
+  if (filters.end_date) params.append("end_date", filters.end_date);
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
 async function loadSegmentHistory() {
-  const raw = await apiRequest("/analytics/segment-history/");
+  try {
+    const query = buildSegmentHistoryQuery();
+    const raw = await apiRequest(`/analytics/segment-history/${query}`);
 
-  if (!raw) return;
+    if (!raw) return;
 
-  const rows = Array.isArray(raw) ? raw : raw.veriler || [];
+    const rows = Array.isArray(raw) ? raw : raw.veriler || [];
 
-  rawSegmentRows = rows;
-  historyData = buildTransitionRows(rows);
-  filteredHistory = [...historyData];
+    rawSegmentRows = rows;
+    historyData = buildTransitionRows(rows);
+    filteredHistory = [...historyData];
 
-  currentPage = 1;
-  renderAll(filteredHistory);
+    fillSegmentFilters();
+    currentPage = 1;
+    renderAll(filteredHistory);
+
+  } catch (error) {
+    console.error("Segment geçmişi yüklenemedi:", error);
+
+    if (historyTableBody) {
+      historyTableBody.innerHTML = `
+        <tr>
+          <td colspan="8">Segment geçmişi yüklenirken hata oluştu.</td>
+        </tr>
+      `;
+    }
+  }
 }
 
 function buildTransitionRows(rows) {
@@ -121,7 +173,7 @@ function buildTransitionRows(rows) {
       customer: row.musteri_ad_soyad || row.musteri || "-",
       year: Number(row.yil),
       segment: normalizeSegmentName(row.segment_adi || row.segment),
-      rfm: row.toplam_rfm_skoru || "-",
+      rfm: row.toplam_rfm_skoru || 0,
       date: row.hesaplama_tarihi || null
     });
   });
@@ -146,17 +198,44 @@ function buildTransitionRows(rows) {
         newSegment,
         type,
         year: current.year,
+        rfm: current.rfm,
         date: current.date ? formatDate(current.date) : `${current.year}`,
+        rawDate: current.date,
         desc:
           type === "Sabit"
             ? `${previous.year} yılından ${current.year} yılına segmenti sabit kaldı.`
-            : `${previous.year} yılından ${current.year} yılına segment değişimi.`,
-        rfm: current.rfm
+            : `${previous.year} yılından ${current.year} yılına segment değişimi.`
       });
     }
   });
 
   return transitions;
+}
+
+function fillSegmentFilters() {
+  if (!oldSegmentFilter || !newSegmentFilter) return;
+
+  const oldValue = oldSegmentFilter.value || "all";
+  const newValue = newSegmentFilter.value || "all";
+
+  const segments = Array.from(
+    new Set(
+      rawSegmentRows
+        .map(row => row.segment_adi || row.segment)
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b, "tr"));
+
+  oldSegmentFilter.innerHTML = `<option value="all">Tümü</option>`;
+  newSegmentFilter.innerHTML = `<option value="all">Tümü</option>`;
+
+  segments.forEach(segment => {
+    oldSegmentFilter.innerHTML += `<option value="${segment}">${segment}</option>`;
+    newSegmentFilter.innerHTML += `<option value="${segment}">${segment}</option>`;
+  });
+
+  oldSegmentFilter.value = segments.includes(oldValue) ? oldValue : "all";
+  newSegmentFilter.value = segments.includes(newValue) ? newValue : "all";
 }
 
 function renderKpis(data) {
@@ -274,36 +353,12 @@ function renderUpDownLists(data) {
   });
 }
 
-function getFilteredRawRows() {
-  const searchValue = segmentSearch
-    ? segmentSearch.value.toLocaleLowerCase("tr-TR").trim()
-    : "";
-
-  const yearValue = yearFilter ? yearFilter.value : "all";
-
-  return rawSegmentRows.filter(row => {
-    const customer = String(row.musteri_ad_soyad || row.musteri || "").toLocaleLowerCase("tr-TR");
-    const segment = String(row.segment_adi || row.segment || "").toLocaleLowerCase("tr-TR");
-
-    const searchMatch =
-      customer.includes(searchValue) ||
-      segment.includes(searchValue) ||
-      String(row.musteri_id || "").includes(searchValue);
-
-    const yearMatch =
-      yearValue === "all" || String(row.yil) === yearValue;
-
-    return searchMatch && yearMatch;
-  });
-}
-
 function renderYearCompare() {
   if (!yearCompareBox) return;
 
-  const filteredRawRows = getFilteredRawRows();
   const yearMap = {};
 
-  filteredRawRows.forEach(row => {
+  rawSegmentRows.forEach(row => {
     const year = Number(row.yil);
     const segment = row.segment_adi || row.segment || "-";
 
@@ -358,7 +413,7 @@ function renderTable(data) {
   if (!data.length) {
     historyTableBody.innerHTML = `
       <tr>
-        <td colspan="7">Kayıt bulunamadı.</td>
+        <td colspan="8">Kayıt bulunamadı.</td>
       </tr>
     `;
     historyCountText.textContent = "0 kayıt listeleniyor";
@@ -377,6 +432,7 @@ function renderTable(data) {
         <td>${item.newSegment}</td>
         <td><span class="badge ${getBadgeClass(item.type)}">${item.type}</span></td>
         <td>${item.year}</td>
+        <td>${item.rfm}</td>
         <td>${item.date}</td>
         <td>${item.desc}</td>
       </tr>
@@ -465,41 +521,14 @@ function renderAll(data) {
 
 function applyFilters() {
   currentPage = 1;
-
-  const searchValue = segmentSearch
-    ? segmentSearch.value.toLocaleLowerCase("tr-TR").trim()
-    : "";
-
-  const transitionValue = transitionFilter ? transitionFilter.value : "all";
-  const yearValue = yearFilter ? yearFilter.value : "all";
-
-  filteredHistory = historyData.filter(item => {
-    const customer = item.customer.toLocaleLowerCase("tr-TR");
-    const oldSegment = item.oldSegment.toLocaleLowerCase("tr-TR");
-    const newSegment = item.newSegment.toLocaleLowerCase("tr-TR");
-
-    const searchMatch =
-      customer.includes(searchValue) ||
-      oldSegment.includes(searchValue) ||
-      newSegment.includes(searchValue);
-
-    const transitionMatch =
-      transitionValue === "all" || item.type === transitionValue;
-
-    const yearMatch =
-      yearValue === "all" || String(item.year) === yearValue;
-
-    return searchMatch && transitionMatch && yearMatch;
-  });
-
-  renderAll(filteredHistory);
+  loadSegmentHistory();
 }
 
 function exportSegmentHistory() {
-  let csv = "\uFEFFMüşteri,Önceki Segment,Yeni Segment,Geçiş Türü,Yıl,Tarih,Açıklama\n";
+  let csv = "\uFEFFMüşteri,Önceki Segment,Yeni Segment,Geçiş Türü,Yıl,RFM,Tarih,Açıklama\n";
 
   filteredHistory.forEach(item => {
-    csv += `"${item.customer}","${item.oldSegment}","${item.newSegment}","${item.type}","${item.year}","${item.date}","${item.desc}"\n`;
+    csv += `"${item.customer}","${item.oldSegment}","${item.newSegment}","${item.type}","${item.year}","${item.rfm}","${item.date}","${item.desc}"\n`;
   });
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -513,37 +542,37 @@ function exportSegmentHistory() {
   URL.revokeObjectURL(url);
 }
 
-function ensureSameFilterOption() {
-  if (!transitionFilter) return;
-
-  const hasSameOption = Array.from(transitionFilter.options)
-    .some(option => option.value === "Sabit");
-
-  if (!hasSameOption) {
-    const option = document.createElement("option");
-    option.value = "Sabit";
-    option.textContent = "Sabit";
-    transitionFilter.appendChild(option);
-  }
-}
-
 function setupEvents() {
-  ensureSameFilterOption();
-
   if (segmentSearch) {
     segmentSearch.addEventListener("input", () => {
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(applyFilters, 300);
+      searchTimer = setTimeout(applyFilters, 350);
     });
   }
 
-  if (transitionFilter) {
-    transitionFilter.addEventListener("change", applyFilters);
-  }
+  [
+    transitionFilter,
+    yearFilter,
+    oldSegmentFilter,
+    newSegmentFilter,
+    startDateFilter,
+    endDateFilter
+  ].forEach(select => {
+    if (!select) return;
+    select.addEventListener("change", applyFilters);
+  });
 
-  if (yearFilter) {
-    yearFilter.addEventListener("change", applyFilters);
-  }
+  [
+    minRfmFilter,
+    maxRfmFilter
+  ].forEach(input => {
+    if (!input) return;
+
+    input.addEventListener("input", () => {
+      clearTimeout(input._timer);
+      input._timer = setTimeout(applyFilters, 500);
+    });
+  });
 
   if (exportBtn) {
     exportBtn.addEventListener("click", exportSegmentHistory);
@@ -552,14 +581,5 @@ function setupEvents() {
 
 window.addEventListener("DOMContentLoaded", async () => {
   setupEvents();
-
-  if (historyTableBody) {
-    historyTableBody.innerHTML = `
-      <tr>
-        <td colspan="7">Segment geçmişi yükleniyor...</td>
-      </tr>
-    `;
-  }
-
   await loadSegmentHistory();
 });

@@ -45,8 +45,8 @@ def find_segment_name(r_score: int, f_score: int, m_score: int) -> str:
 def get_segment_id_by_name(db: Session, segment_name: str):
     result = db.execute(
         text("""
-            SELECT segment_id 
-            FROM segmentler 
+            SELECT segment_id
+            FROM segmentler
             WHERE segment_adi = :segment_name
             LIMIT 1
         """),
@@ -143,7 +143,7 @@ def run_segment_history(db: Session):
                 text("""
                     SELECT gecmis_id
                     FROM musteri_segment_gecmis
-                    WHERE musteri_id = :musteri_id 
+                    WHERE musteri_id = :musteri_id
                       AND yil = :yil
                     LIMIT 1
                 """),
@@ -157,14 +157,14 @@ def run_segment_history(db: Session):
                 db.execute(
                     text("""
                         UPDATE musteri_segment_gecmis
-                        SET 
+                        SET
                             segment_id = :segment_id,
                             r_skoru = :r_skoru,
                             f_skoru = :f_skoru,
                             m_skoru = :m_skoru,
                             toplam_rfm_skoru = :toplam_rfm_skoru,
                             hesaplama_tarihi = :hesaplama_tarihi
-                        WHERE musteri_id = :musteri_id 
+                        WHERE musteri_id = :musteri_id
                           AND yil = :yil
                     """),
                     {
@@ -227,9 +227,61 @@ def run_segment_history(db: Session):
     }
 
 
-def get_all_segment_history(db: Session):
+def get_all_segment_history(
+    db: Session,
+    search: str = "",
+    year: str = "all",
+    transition: str = "all",
+    old_segment: str = "all",
+    new_segment: str = "all",
+    min_rfm: int = 0,
+    max_rfm: int = 0,
+    start_date: str = "",
+    end_date: str = ""
+):
+    conditions = []
+    params = {}
+
+    if search:
+        conditions.append("""
+            (
+                LOWER(CONCAT(m.musteri_adi, ' ', m.musteri_soyadi)) LIKE LOWER(:search)
+                OR LOWER(s.segment_adi) LIKE LOWER(:search)
+                OR CAST(msg.musteri_id AS CHAR) LIKE :search
+            )
+        """)
+        params["search"] = f"%{search}%"
+
+    if year != "all":
+        conditions.append("msg.yil = :year")
+        params["year"] = int(year)
+
+    if new_segment != "all":
+        conditions.append("s.segment_adi = :new_segment")
+        params["new_segment"] = new_segment
+
+    if min_rfm > 0:
+        conditions.append("COALESCE(msg.toplam_rfm_skoru, 0) >= :min_rfm")
+        params["min_rfm"] = min_rfm
+
+    if max_rfm > 0:
+        conditions.append("COALESCE(msg.toplam_rfm_skoru, 0) <= :max_rfm")
+        params["max_rfm"] = max_rfm
+
+    if start_date:
+        conditions.append("DATE(msg.hesaplama_tarihi) >= :start_date")
+        params["start_date"] = start_date
+
+    if end_date:
+        conditions.append("DATE(msg.hesaplama_tarihi) <= :end_date")
+        params["end_date"] = end_date
+
+    where_sql = ""
+    if conditions:
+        where_sql = "WHERE " + " AND ".join(conditions)
+
     rows = db.execute(
-        text("""
+        text(f"""
             SELECT
                 msg.gecmis_id,
                 msg.musteri_id,
@@ -243,15 +295,17 @@ def get_all_segment_history(db: Session):
                 msg.toplam_rfm_skoru,
                 msg.hesaplama_tarihi
             FROM musteri_segment_gecmis msg
-            LEFT JOIN musteriler m 
+            LEFT JOIN musteriler m
                 ON m.musteri_id = msg.musteri_id
-            LEFT JOIN segmentler s 
+            LEFT JOIN segmentler s
                 ON s.segment_id = msg.segment_id
+            {where_sql}
             ORDER BY msg.musteri_id, msg.yil
-        """)
+        """),
+        params
     ).mappings().all()
 
-    return [
+    data = [
         {
             "gecmis_id": row["gecmis_id"],
             "musteri_id": row["musteri_id"],
@@ -267,6 +321,70 @@ def get_all_segment_history(db: Session):
         }
         for row in rows
     ]
+
+    if transition == "all" and old_segment == "all":
+        return data
+
+    grouped = {}
+
+    for row in data:
+        musteri_id = row["musteri_id"]
+
+        if musteri_id not in grouped:
+            grouped[musteri_id] = []
+
+        grouped[musteri_id].append(row)
+
+    allowed_ids = set()
+
+    for customer_rows in grouped.values():
+        sorted_rows = sorted(customer_rows, key=lambda item: item["yil"])
+
+        for i in range(1, len(sorted_rows)):
+            previous = sorted_rows[i - 1]
+            current = sorted_rows[i]
+
+            previous_segment = previous["segment_adi"]
+            current_segment = current["segment_adi"]
+
+            previous_rank = get_segment_rank(previous_segment)
+            current_rank = get_segment_rank(current_segment)
+
+            if previous_segment == current_segment:
+                transition_type = "Sabit"
+            elif current_rank > previous_rank:
+                transition_type = "Yükseldi"
+            else:
+                transition_type = "Düştü"
+
+            transition_match = transition == "all" or transition_type == transition
+            old_segment_match = old_segment == "all" or previous_segment == old_segment
+
+            if transition_match and old_segment_match:
+                allowed_ids.add(current["gecmis_id"])
+
+    return [
+        row for row in data
+        if row["gecmis_id"] in allowed_ids
+    ]
+
+
+def get_segment_rank(segment_name: str) -> int:
+    segment_rank = {
+        "Kayıp": 1,
+        "Kış Uykusunda": 2,
+        "Uyumak Üzere": 3,
+        "Risk Altında": 4,
+        "Onları Kaybedemezsin": 5,
+        "Dikkat Gerekiyor": 6,
+        "Umut Verici": 7,
+        "Yeni Müşteri": 8,
+        "Potansiyel Sadık": 9,
+        "Sadık Müşteri": 10,
+        "Şampiyon": 11
+    }
+
+    return segment_rank.get(segment_name, 0)
 
 
 def get_customer_segment_history(db: Session, musteri_id: int):
@@ -285,9 +403,9 @@ def get_customer_segment_history(db: Session, musteri_id: int):
                 msg.toplam_rfm_skoru,
                 msg.hesaplama_tarihi
             FROM musteri_segment_gecmis msg
-            LEFT JOIN musteriler m 
+            LEFT JOIN musteriler m
                 ON m.musteri_id = msg.musteri_id
-            LEFT JOIN segmentler s 
+            LEFT JOIN segmentler s
                 ON s.segment_id = msg.segment_id
             WHERE msg.musteri_id = :musteri_id
             ORDER BY msg.yil
@@ -321,7 +439,7 @@ def get_segment_history_summary(db: Session):
                 s.segment_adi,
                 COUNT(*) AS musteri_sayisi
             FROM musteri_segment_gecmis msg
-            LEFT JOIN segmentler s 
+            LEFT JOIN segmentler s
                 ON s.segment_id = msg.segment_id
             GROUP BY msg.yil, s.segment_adi
             ORDER BY msg.yil, musteri_sayisi DESC
