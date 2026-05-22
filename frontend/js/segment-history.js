@@ -131,8 +131,7 @@ function buildSegmentHistoryQuery() {
 
 async function loadSegmentHistory() {
   try {
-    const query = buildSegmentHistoryQuery();
-    const raw = await apiRequest(`/analytics/segment-history/${query}`);
+    const raw = await apiRequest("/analytics/segment-history/");
 
     if (!raw) return;
 
@@ -521,7 +520,70 @@ function renderAll(data) {
 
 function applyFilters() {
   currentPage = 1;
-  loadSegmentHistory();
+
+  const searchValue = segmentSearch
+    ? segmentSearch.value.toLocaleLowerCase("tr-TR").trim()
+    : "";
+
+  const transitionValue = transitionFilter ? transitionFilter.value : "all";
+  const yearValue = yearFilter ? yearFilter.value : "all";
+  const oldSegmentValue = oldSegmentFilter ? oldSegmentFilter.value : "all";
+  const newSegmentValue = newSegmentFilter ? newSegmentFilter.value : "all";
+  const minRfmValue = Number(minRfmFilter?.value || 0);
+  const maxRfmValue = Number(maxRfmFilter?.value || 0);
+  const startDateValue = startDateFilter?.value || "";
+  const endDateValue = endDateFilter?.value || "";
+
+  filteredHistory = historyData.filter(item => {
+    const customer = item.customer.toLocaleLowerCase("tr-TR");
+    const oldSegment = item.oldSegment.toLocaleLowerCase("tr-TR");
+    const newSegment = item.newSegment.toLocaleLowerCase("tr-TR");
+
+    const searchMatch =
+      customer.includes(searchValue) ||
+      oldSegment.includes(searchValue) ||
+      newSegment.includes(searchValue);
+
+    const transitionMatch =
+      transitionValue === "all" || item.type === transitionValue;
+
+    const yearMatch =
+      yearValue === "all" || String(item.year) === yearValue;
+
+    const oldSegmentMatch =
+      oldSegmentValue === "all" || item.oldSegment === oldSegmentValue;
+
+    const newSegmentMatch =
+      newSegmentValue === "all" || item.newSegment === newSegmentValue;
+
+    const minRfmMatch =
+      minRfmValue === 0 || Number(item.rfm || 0) >= minRfmValue;
+
+    const maxRfmMatch =
+      maxRfmValue === 0 || Number(item.rfm || 0) <= maxRfmValue;
+
+    const itemDate = item.rawDate ? String(item.rawDate).slice(0, 10) : "";
+
+    const startDateMatch =
+      !startDateValue || itemDate >= startDateValue;
+
+    const endDateMatch =
+      !endDateValue || itemDate <= endDateValue;
+
+    return (
+      searchMatch &&
+      transitionMatch &&
+      yearMatch &&
+      oldSegmentMatch &&
+      newSegmentMatch &&
+      minRfmMatch &&
+      maxRfmMatch &&
+      startDateMatch &&
+      endDateMatch
+    );
+  });
+
+  renderAll(filteredHistory);
 }
 
 function exportSegmentHistory() {
