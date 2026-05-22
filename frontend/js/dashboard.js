@@ -826,4 +826,35 @@ function setupDashboardSearch() {
   });
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  const name =
+    user?.ad_soyad ||
+    user?.name ||
+    user?.username ||
+    "Kullanıcı";
+
+  const helloEl = document.getElementById("helloTitle");
+  const topUserName = document.getElementById("topUserName");
+  const topUserRole = document.getElementById("topUserRole");
+  const avatar = document.getElementById("userAvatar");
+
+  if (helloEl) {
+    helloEl.textContent = `Merhaba, ${name}`;
+  }
+
+  if (topUserName) {
+    topUserName.textContent = name;
+  }
+
+  if (topUserRole && user) {
+    topUserRole.textContent = user.rol_adi || "Rol";
+  }
+
+  if (avatar && name) {
+    avatar.textContent = name.charAt(0).toUpperCase();
+  }
+});
+
 window.addEventListener("DOMContentLoaded", initDashboardPage);
