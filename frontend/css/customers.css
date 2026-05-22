@@ -1173,7 +1173,7 @@ body.light-mode .filter-group input[type="date"] {
 
 /* Chrome, Edge, Safari */
 .filter-panel::-webkit-scrollbar {
-  height: 6px; /* incelt */
+  height: 4px; /* incelt */
 }
 
 .filter-panel::-webkit-scrollbar-track {
@@ -1195,10 +1195,9 @@ body.light-mode .filter-group input[type="date"] {
   scrollbar-color: #ff2525 transparent;
   scrollbar-width: thin;
 }
-.filter-panel::-webkit-scrollbar-button:single-button {
-  display: none;
-}
-
+/* Scroll barı tamamen sade yap */
 .filter-panel::-webkit-scrollbar-button {
-  display: none;
+  display: none; /* okları kaldırır */
+  width: 0;
+  height: 0;
 }
