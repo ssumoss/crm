@@ -239,7 +239,7 @@ async function loadMonthlySales(year) {
         formatter: value => formatShortCurrency(value)
       }
     },
-    colors: ["#ba1212"],
+    colors: ["#e70f0f"],
     stroke: {
       curve: "smooth",
       width: 4
@@ -302,7 +302,7 @@ function renderSegmentDistribution(segments) {
     },
     labels,
     series: values,
-    colors: ["#c61e1e", "#e36724", "#6366f1", "#f3b446", "#36b549"],
+    colors: ["#c61e1e", "#f0661d", "#63c2f1", "#f1cc35", "#38ca44"],
     stroke: {
       colors: ["transparent"]
     },
@@ -449,7 +449,7 @@ function renderChannelSales(channelSales) {
     },
     labels,
     series: values,
-    colors: ["#c41313", "#3d9adc", "#6366f1", "#f59e0b"],
+    colors: ["#ee1818", "#4a9eda", "#6aa5ee", "#f59e0b"],
     stroke: {
       colors: ["transparent"]
     },
