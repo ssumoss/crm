@@ -302,7 +302,7 @@ function renderSegmentDistribution(segments) {
     },
     labels,
     series: values,
-    colors: ["#b21818", "#e36724", "#6366f1", "#f3b446", "#115f58"],
+    colors: ["#b21818", "#e36724", "#6366f1", "#f3b446", "#36b549"],
     stroke: {
       colors: ["transparent"]
     },
@@ -449,7 +449,7 @@ function renderChannelSales(channelSales) {
     },
     labels,
     series: values,
-    colors: ["#c41313", "#cf418f", "#6366f1", "#f59e0b"],
+    colors: ["#c41313", "#3d9adc", "#6366f1", "#f59e0b"],
     stroke: {
       colors: ["transparent"]
     },
