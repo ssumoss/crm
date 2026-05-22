@@ -38,19 +38,19 @@ def get_all_customers_service(
     }
 
     date_filter_f2 = ""
-    date_filter_ftarih = ""
     date_filter_f3 = ""
+    date_filter_ftarih = ""
 
     if start_date:
         date_filter_f2 += " AND f2.fatura_tarihi >= :start_date"
-        date_filter_ftarih += " AND ftarih.fatura_tarihi >= :start_date"
         date_filter_f3 += " AND f3.fatura_tarihi >= :start_date"
+        date_filter_ftarih += " AND ftarih.fatura_tarihi >= :start_date"
         params["start_date"] = start_date
 
     if end_date:
         date_filter_f2 += " AND f2.fatura_tarihi <= :end_date"
-        date_filter_ftarih += " AND ftarih.fatura_tarihi <= :end_date"
         date_filter_f3 += " AND f3.fatura_tarihi <= :end_date"
+        date_filter_ftarih += " AND ftarih.fatura_tarihi <= :end_date"
         params["end_date"] = end_date
 
     if search:
@@ -123,6 +123,7 @@ def get_all_customers_service(
         params["max_spending"] = max_spending
 
     where_sql = ""
+
     if conditions:
         where_sql = "WHERE " + " AND ".join(conditions)
 
@@ -130,11 +131,16 @@ def get_all_customers_service(
         SELECT COUNT(*) FROM (
             SELECT m.musteri_id
             FROM musteriler m
-            LEFT JOIN satis_noktalari sn ON m.satis_noktasi_id = sn.satis_noktasi_id
-            LEFT JOIN sehirler se ON sn.sehir_id = se.sehir_id
-            LEFT JOIN rfm_analizi r ON m.musteri_id = r.musteri_id
-            LEFT JOIN segmentler s ON r.segment_id = s.segment_id
-            LEFT JOIN analitik_tahminler a ON m.musteri_id = a.musteri_id
+            LEFT JOIN satis_noktalari sn 
+                ON m.satis_noktasi_id = sn.satis_noktasi_id
+            LEFT JOIN sehirler se 
+                ON sn.sehir_id = se.sehir_id
+            LEFT JOIN rfm_analizi r 
+                ON m.musteri_id = r.musteri_id
+            LEFT JOIN segmentler s 
+                ON r.segment_id = s.segment_id
+            LEFT JOIN analitik_tahminler a 
+                ON m.musteri_id = a.musteri_id
             {where_sql}
             GROUP BY m.musteri_id
         ) AS total_table
@@ -156,11 +162,16 @@ def get_all_customers_service(
                 THEN 1 ELSE 0 
             END) AS sampiyon_musteri
         FROM musteriler m
-        LEFT JOIN satis_noktalari sn ON m.satis_noktasi_id = sn.satis_noktasi_id
-        LEFT JOIN sehirler se ON sn.sehir_id = se.sehir_id
-        LEFT JOIN rfm_analizi r ON m.musteri_id = r.musteri_id
-        LEFT JOIN segmentler s ON r.segment_id = s.segment_id
-        LEFT JOIN analitik_tahminler a ON m.musteri_id = a.musteri_id
+        LEFT JOIN satis_noktalari sn 
+            ON m.satis_noktasi_id = sn.satis_noktasi_id
+        LEFT JOIN sehirler se 
+            ON sn.sehir_id = se.sehir_id
+        LEFT JOIN rfm_analizi r 
+            ON m.musteri_id = r.musteri_id
+        LEFT JOIN segmentler s 
+            ON r.segment_id = s.segment_id
+        LEFT JOIN analitik_tahminler a 
+            ON m.musteri_id = a.musteri_id
         {where_sql}
     """
 
@@ -196,11 +207,16 @@ def get_all_customers_service(
             COALESCE(a.ltv_tahmini, 0) AS ltv_tahmini,
             COALESCE(a.churn_olasiligi, 0) AS churn_olasiligi
         FROM musteriler m
-        LEFT JOIN satis_noktalari sn ON m.satis_noktasi_id = sn.satis_noktasi_id
-        LEFT JOIN sehirler se ON sn.sehir_id = se.sehir_id
-        LEFT JOIN rfm_analizi r ON m.musteri_id = r.musteri_id
-        LEFT JOIN segmentler s ON r.segment_id = s.segment_id
-        LEFT JOIN analitik_tahminler a ON m.musteri_id = a.musteri_id
+        LEFT JOIN satis_noktalari sn 
+            ON m.satis_noktasi_id = sn.satis_noktasi_id
+        LEFT JOIN sehirler se 
+            ON sn.sehir_id = se.sehir_id
+        LEFT JOIN rfm_analizi r 
+            ON m.musteri_id = r.musteri_id
+        LEFT JOIN segmentler s 
+            ON r.segment_id = s.segment_id
+        LEFT JOIN analitik_tahminler a 
+            ON m.musteri_id = a.musteri_id
         {where_sql}
         GROUP BY 
             m.musteri_id,
@@ -252,6 +268,7 @@ def get_all_customers_service(
         },
         "veriler": veriler
     }
+
 
 def get_customer_filter_options_service(db):
     segment_rows = db.execute(text("""
