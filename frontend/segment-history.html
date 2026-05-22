@@ -23,6 +23,7 @@
       </button>
 
       <nav class="menu">
+
         <a href="dashboard.html" data-permission="dashboard_goruntule">
           <i class="fa-solid fa-chart-line"></i>
           <span>Özet</span>
@@ -132,6 +133,7 @@
           <i class="fa-solid fa-right-from-bracket"></i>
           <span>Çıkış</span>
         </a>
+
       </nav>
     </aside>
 
@@ -145,7 +147,7 @@
         <div class="top-right">
           <div class="search">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input id="segmentSearch" type="text" placeholder="Müşteri, ID veya segment ara..." />
+            <input id="segmentSearch" type="text" placeholder="Müşteri veya segment ara..." />
           </div>
 
           <button class="theme-btn" id="themeToggle">
@@ -284,7 +286,6 @@
       </section>
 
       <section class="filter-panel">
-
         <div class="filter-group">
           <label>Geçiş Türü</label>
           <select id="transitionFilter">
@@ -303,40 +304,6 @@
             <option value="2024">2024</option>
             <option value="2025">2025</option>
           </select>
-        </div>
-
-        <div class="filter-group">
-          <label>Önceki Segment</label>
-          <select id="oldSegmentFilter">
-            <option value="all">Tümü</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label>Yeni Segment</label>
-          <select id="newSegmentFilter">
-            <option value="all">Tümü</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label>Min RFM</label>
-          <input type="number" id="minRfmFilter" placeholder="0" min="0" />
-        </div>
-
-        <div class="filter-group">
-          <label>Max RFM</label>
-          <input type="number" id="maxRfmFilter" placeholder="555" min="0" />
-        </div>
-
-        <div class="filter-group">
-          <label>Başlangıç Tarihi</label>
-          <input type="date" id="startDateFilter" />
-        </div>
-
-        <div class="filter-group">
-          <label>Bitiş Tarihi</label>
-          <input type="date" id="endDateFilter" />
         </div>
 
         <button class="export-btn" id="exportBtn">
@@ -402,7 +369,6 @@
                 <th>Yeni Segment</th>
                 <th>Geçiş Türü</th>
                 <th>Yıl</th>
-                <th>RFM</th>
                 <th>Tarih</th>
                 <th>Açıklama</th>
               </tr>
@@ -410,7 +376,7 @@
 
             <tbody id="historyTableBody">
               <tr>
-                <td colspan="8">Segment geçmişi yükleniyor...</td>
+                <td colspan="7">Segment geçmişi yükleniyor...</td>
               </tr>
             </tbody>
           </table>
