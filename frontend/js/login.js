@@ -47,6 +47,17 @@ if (togglePassword && passwordInput) {
   });
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  const savedEmail = localStorage.getItem("rememberEmail");
+  const usernameInput = document.getElementById("username");
+  const rememberMe = document.getElementById("rememberMe");
+
+  if (savedEmail && usernameInput && rememberMe) {
+    usernameInput.value = savedEmail;
+    rememberMe.checked = true;
+  }
+});
+
 async function fetchCurrentUser(token) {
   const response = await fetch(`${API_URL}/auth/me`, {
     method: "GET",
@@ -76,6 +87,7 @@ if (loginForm) {
 
     const email = document.getElementById("username").value.trim();
     const password = passwordInput.value.trim();
+    const rememberMe = document.getElementById("rememberMe")?.checked;
 
     if (!email || !password) {
       alert("Lütfen e-posta ve şifre alanlarını doldurun.");
@@ -110,8 +122,22 @@ if (loginForm) {
         return;
       }
 
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("access_token", data.access_token);
+      if (rememberMe) {
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("rememberEmail", email);
+
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("access_token");
+      } else {
+        sessionStorage.setItem("token", data.access_token);
+        sessionStorage.setItem("access_token", data.access_token);
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("rememberEmail");
+      }
+
       localStorage.setItem("token_type", data.token_type || "bearer");
 
       const currentUser = await fetchCurrentUser(data.access_token);
