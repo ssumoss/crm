@@ -1195,3 +1195,10 @@ body.light-mode .filter-group input[type="date"] {
   scrollbar-color: #ff2525 transparent;
   scrollbar-width: thin;
 }
+.filter-panel::-webkit-scrollbar-button:single-button {
+  display: none;
+}
+
+.filter-panel::-webkit-scrollbar-button {
+  display: none;
+}
