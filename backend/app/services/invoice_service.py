@@ -7,7 +7,11 @@ def get_all_invoices_service(
     limit: int = 50,
     search: str | None = None,
     belge_tipi: str | None = None,
-    satis_noktasi: str | None = None
+    satis_noktasi: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    min_tutar: float | None = None,
+    max_tutar: float | None = None
 ):
     offset = (page - 1) * limit
 
@@ -20,32 +24,48 @@ def get_all_invoices_service(
     if search:
         where.append("""
             (
-                f.fatura_no LIKE :search
-                OR m.musteri_adi LIKE :search
-                OR m.musteri_soyadi LIKE :search
-                OR sn.satis_noktasi_adi LIKE :search
+                CAST(f.fatura_no AS CHAR) LIKE :search
+                OR CONCAT(COALESCE(m.musteri_adi, ''), ' ', COALESCE(m.musteri_soyadi, '')) LIKE :search
+                OR COALESCE(sn.satis_noktasi_adi, '') LIKE :search
+                OR COALESCE(bt.belge_tipi_adi, '') LIKE :search
             )
         """)
         params["search"] = f"%{search}%"
 
     if belge_tipi and belge_tipi != "all":
-        where.append("bt.belge_tipi_adi = :belge_tipi")
-        params["belge_tipi"] = belge_tipi
+        where.append("COALESCE(bt.belge_tipi_adi, '') LIKE :belge_tipi")
+        params["belge_tipi"] = f"%{belge_tipi}%"
 
     if satis_noktasi and satis_noktasi != "all":
-        where.append("sn.satis_noktasi_adi = :satis_noktasi")
+        where.append("COALESCE(sn.satis_noktasi_adi, '') = :satis_noktasi")
         params["satis_noktasi"] = satis_noktasi
+
+    if start_date:
+        where.append("DATE(f.fatura_tarihi) >= :start_date")
+        params["start_date"] = start_date
+
+    if end_date:
+        where.append("DATE(f.fatura_tarihi) <= :end_date")
+        params["end_date"] = end_date
+
+    if min_tutar is not None:
+        where.append("f.fatura_tutari >= :min_tutar")
+        params["min_tutar"] = min_tutar
+
+    if max_tutar is not None:
+        where.append("f.fatura_tutari <= :max_tutar")
+        params["max_tutar"] = max_tutar
 
     where_sql = " AND ".join(where)
 
     total_count = db.execute(text(f"""
         SELECT COUNT(DISTINCT f.fatura_no)
         FROM faturalar f
-        LEFT JOIN musteriler m 
+        LEFT JOIN musteriler m
             ON f.musteri_id = m.musteri_id
-        LEFT JOIN belge_tipi bt 
+        LEFT JOIN belge_tipi bt
             ON f.belge_tipi_id = bt.belge_tipi_id
-        LEFT JOIN satis_noktalari sn 
+        LEFT JOIN satis_noktalari sn
             ON f.satis_noktasi_id = sn.satis_noktasi_id
         WHERE {where_sql}
     """), params).scalar()
@@ -53,20 +73,24 @@ def get_all_invoices_service(
     rows = db.execute(text(f"""
         SELECT
             f.fatura_no,
-            CONCAT(m.musteri_adi, ' ', m.musteri_soyadi) AS musteri,
+            CONCAT(
+                COALESCE(m.musteri_adi, ''),
+                ' ',
+                COALESCE(m.musteri_soyadi, '')
+            ) AS musteri,
             f.fatura_tutari,
             f.fatura_tarihi,
             bt.belge_tipi_adi,
             sn.satis_noktasi_adi,
             COUNT(sd.siparis_id) AS kalem_sayisi
         FROM faturalar f
-        LEFT JOIN musteriler m 
+        LEFT JOIN musteriler m
             ON f.musteri_id = m.musteri_id
-        LEFT JOIN belge_tipi bt 
+        LEFT JOIN belge_tipi bt
             ON f.belge_tipi_id = bt.belge_tipi_id
-        LEFT JOIN satis_noktalari sn 
+        LEFT JOIN satis_noktalari sn
             ON f.satis_noktasi_id = sn.satis_noktasi_id
-        LEFT JOIN siparis_detaylari sd 
+        LEFT JOIN siparis_detaylari sd
             ON f.fatura_no = sd.fatura_no
         WHERE {where_sql}
         GROUP BY
@@ -82,7 +106,7 @@ def get_all_invoices_service(
     """), params).fetchall()
 
     total_count = int(total_count or 0)
-    toplam_sayfa = (total_count + limit - 1) // limit
+    toplam_sayfa = (total_count + limit - 1) // limit if limit else 1
 
     return {
         "toplam_kayit": total_count,
@@ -93,7 +117,7 @@ def get_all_invoices_service(
         "veriler": [
             {
                 "fatura_no": row[0],
-                "musteri": row[1] or "-",
+                "musteri": row[1].strip() if row[1] and row[1].strip() else "-",
                 "tutar": float(row[2] or 0),
                 "tarih": str(row[3]) if row[3] else "-",
                 "belge_tipi": row[4] or "-",
@@ -136,7 +160,9 @@ def get_invoice_monthly_trend_service(db, year: int):
         WHERE YEAR(fatura_tarihi) = :year
         GROUP BY MONTH(fatura_tarihi)
         ORDER BY ay
-    """), {"year": year}).fetchall()
+    """), {
+        "year": year
+    }).fetchall()
 
     months = [
         "Oca", "Şub", "Mar", "Nis", "May", "Haz",
@@ -174,7 +200,7 @@ def get_invoice_basket_analysis_service(db, year: int):
                 f.fatura_no,
                 COUNT(sd.siparis_id) AS kalem_sayisi
             FROM faturalar f
-            LEFT JOIN siparis_detaylari sd 
+            LEFT JOIN siparis_detaylari sd
                 ON f.fatura_no = sd.fatura_no
             WHERE YEAR(f.fatura_tarihi) = :year
               AND f.belge_tipi_id = 1
@@ -183,7 +209,9 @@ def get_invoice_basket_analysis_service(db, year: int):
         GROUP BY kalem_sayisi
         ORDER BY fatura_sayisi DESC
         LIMIT 5
-    """), {"year": year}).fetchall()
+    """), {
+        "year": year
+    }).fetchall()
 
     return [
         {

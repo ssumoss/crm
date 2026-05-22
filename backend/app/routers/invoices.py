@@ -21,6 +21,10 @@ def get_all_invoices(
     search: str | None = Query(None),
     belge_tipi: str | None = Query(None),
     satis_noktasi: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    min_tutar: float | None = Query(None),
+    max_tutar: float | None = Query(None),
     db: Session = Depends(get_db),
     current_user: Kullanicilar = Depends(permission_required("musteri_goruntule"))
 ):
@@ -31,7 +35,11 @@ def get_all_invoices(
             limit=limit,
             search=search,
             belge_tipi=belge_tipi,
-            satis_noktasi=satis_noktasi
+            satis_noktasi=satis_noktasi,
+            start_date=start_date,
+            end_date=end_date,
+            min_tutar=min_tutar,
+            max_tutar=max_tutar
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -44,6 +52,10 @@ def get_all_invoices_no_slash(
     search: str | None = Query(None),
     belge_tipi: str | None = Query(None),
     satis_noktasi: str | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    min_tutar: float | None = Query(None),
+    max_tutar: float | None = Query(None),
     db: Session = Depends(get_db),
     current_user: Kullanicilar = Depends(permission_required("musteri_goruntule"))
 ):
@@ -54,7 +66,11 @@ def get_all_invoices_no_slash(
             limit=limit,
             search=search,
             belge_tipi=belge_tipi,
-            satis_noktasi=satis_noktasi
+            satis_noktasi=satis_noktasi,
+            start_date=start_date,
+            end_date=end_date,
+            min_tutar=min_tutar,
+            max_tutar=max_tutar
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
