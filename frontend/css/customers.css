@@ -1208,3 +1208,11 @@ body.light-mode .filter-group input[type="date"] {
   scrollbar-width: thin !important;
   scrollbar-color: #ff2525 transparent !important;
 }
+.filter-panel {
+  overflow-x: auto;
+  scrollbar-width: none; /* firefox */
+}
+
+.filter-panel::-webkit-scrollbar {
+  display: none; /* tamamen kaldırır */
+}
