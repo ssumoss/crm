@@ -239,7 +239,7 @@ async function loadMonthlySales(year) {
         formatter: value => formatShortCurrency(value)
       }
     },
-    colors: ["#b61515"],
+    colors: ["#ba1212"],
     stroke: {
       curve: "smooth",
       width: 4
@@ -385,7 +385,7 @@ async function loadCitySalesByYear(year) {
         data: values
       }
     ],
-    colors: ["#31b33e"],
+    colors: ["#45b331"],
     xaxis: {
       categories: labels,
       labels: {
@@ -595,7 +595,7 @@ async function loadMonthlyReturnRate(year) {
         data: values
       }
     ],
-    colors: ["#278cc3"],
+    colors: ["#43a9df"],
     xaxis: {
       categories: months
     },
