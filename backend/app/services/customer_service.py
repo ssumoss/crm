@@ -21,39 +21,108 @@ def get_all_customers_service(
     search="",
     segment="all",
     city="all",
-    risk="all"
+    risk="all",
+    min_ltv=0,
+    max_ltv=0,
+    min_spending=0,
+    max_spending=0,
+    start_date="",
+    end_date=""
 ):
     offset = (page - 1) * limit
 
     conditions = []
+    params = {
+        "limit": limit,
+        "offset": offset
+    }
+
+    date_filter_f2 = ""
+    date_filter_ftarih = ""
+    date_filter_f3 = ""
+
+    if start_date:
+        date_filter_f2 += " AND f2.fatura_tarihi >= :start_date"
+        date_filter_ftarih += " AND ftarih.fatura_tarihi >= :start_date"
+        date_filter_f3 += " AND f3.fatura_tarihi >= :start_date"
+        params["start_date"] = start_date
+
+    if end_date:
+        date_filter_f2 += " AND f2.fatura_tarihi <= :end_date"
+        date_filter_ftarih += " AND ftarih.fatura_tarihi <= :end_date"
+        date_filter_f3 += " AND f3.fatura_tarihi <= :end_date"
+        params["end_date"] = end_date
 
     if search:
-        conditions.append(f"""
+        conditions.append("""
             (
-                LOWER(m.musteri_adi) LIKE LOWER('%{search}%')
-                OR LOWER(m.musteri_soyadi) LIKE LOWER('%{search}%')
-                OR LOWER(m.mail) LIKE LOWER('%{search}%')
-                OR LOWER(m.gsm_no) LIKE LOWER('%{search}%')
+                LOWER(m.musteri_adi) LIKE LOWER(:search)
+                OR LOWER(m.musteri_soyadi) LIKE LOWER(:search)
+                OR LOWER(m.mail) LIKE LOWER(:search)
+                OR LOWER(m.gsm_no) LIKE LOWER(:search)
+            )
+        """)
+        params["search"] = f"%{search}%"
+
+    if segment != "all":
+        conditions.append("s.segment_adi = :segment")
+        params["segment"] = segment
+
+    if city != "all":
+        conditions.append("se.sehir_adi = :city")
+        params["city"] = city
+
+    if risk == "Yüksek":
+        conditions.append("COALESCE(a.churn_olasiligi, 0) >= 70")
+    elif risk == "Orta":
+        conditions.append("COALESCE(a.churn_olasiligi, 0) >= 40 AND COALESCE(a.churn_olasiligi, 0) < 70")
+    elif risk == "Düşük":
+        conditions.append("COALESCE(a.churn_olasiligi, 0) < 40")
+
+    if min_ltv > 0:
+        conditions.append("COALESCE(a.ltv_tahmini, 0) >= :min_ltv")
+        params["min_ltv"] = min_ltv
+
+    if max_ltv > 0:
+        conditions.append("COALESCE(a.ltv_tahmini, 0) <= :max_ltv")
+        params["max_ltv"] = max_ltv
+
+    if start_date or end_date:
+        conditions.append(f"""
+            EXISTS (
+                SELECT 1
+                FROM faturalar ftarih
+                WHERE ftarih.musteri_id = m.musteri_id
+                  AND ftarih.belge_tipi_id = 1
+                  {date_filter_ftarih}
             )
         """)
 
-    if segment != "all":
-        conditions.append(f"s.segment_adi = '{segment}'")
+    if min_spending > 0:
+        conditions.append(f"""
+            COALESCE((
+                SELECT SUM(f2.fatura_tutari)
+                FROM faturalar f2
+                WHERE f2.musteri_id = m.musteri_id
+                  AND f2.belge_tipi_id = 1
+                  {date_filter_f2}
+            ), 0) >= :min_spending
+        """)
+        params["min_spending"] = min_spending
 
-    if city != "all":
-        conditions.append(f"se.sehir_adi = '{city}'")
-
-    if risk == "Yüksek":
-        conditions.append("a.churn_olasiligi >= 70")
-
-    elif risk == "Orta":
-        conditions.append("a.churn_olasiligi >= 40 AND a.churn_olasiligi < 70")
-
-    elif risk == "Düşük":
-        conditions.append("a.churn_olasiligi < 40")
+    if max_spending > 0:
+        conditions.append(f"""
+            COALESCE((
+                SELECT SUM(f2.fatura_tutari)
+                FROM faturalar f2
+                WHERE f2.musteri_id = m.musteri_id
+                  AND f2.belge_tipi_id = 1
+                  {date_filter_f2}
+            ), 0) <= :max_spending
+        """)
+        params["max_spending"] = max_spending
 
     where_sql = ""
-
     if conditions:
         where_sql = "WHERE " + " AND ".join(conditions)
 
@@ -61,25 +130,41 @@ def get_all_customers_service(
         SELECT COUNT(*) FROM (
             SELECT m.musteri_id
             FROM musteriler m
-            LEFT JOIN satis_noktalari sn
-                ON m.satis_noktasi_id = sn.satis_noktasi_id
-            LEFT JOIN sehirler se
-                ON sn.sehir_id = se.sehir_id
-            LEFT JOIN rfm_analizi r
-                ON m.musteri_id = r.musteri_id
-            LEFT JOIN segmentler s
-                ON r.segment_id = s.segment_id
-            LEFT JOIN analitik_tahminler a
-                ON m.musteri_id = a.musteri_id
+            LEFT JOIN satis_noktalari sn ON m.satis_noktasi_id = sn.satis_noktasi_id
+            LEFT JOIN sehirler se ON sn.sehir_id = se.sehir_id
+            LEFT JOIN rfm_analizi r ON m.musteri_id = r.musteri_id
+            LEFT JOIN segmentler s ON r.segment_id = s.segment_id
+            LEFT JOIN analitik_tahminler a ON m.musteri_id = a.musteri_id
             {where_sql}
             GROUP BY m.musteri_id
         ) AS total_table
     """
 
-    total_row = db.execute(text(total_query)).fetchone()
+    total_row = db.execute(text(total_query), params).fetchone()
 
     total_count = int(total_row[0] or 0)
     total_pages = (total_count + limit - 1) // limit
+
+    summary_query = f"""
+        SELECT
+            COUNT(DISTINCT m.musteri_id) AS toplam_musteri,
+            SUM(CASE WHEN COALESCE(a.churn_olasiligi, 0) >= 70 THEN 1 ELSE 0 END) AS yuksek_riskli,
+            AVG(COALESCE(a.ltv_tahmini, 0)) AS ortalama_ltv,
+            SUM(CASE 
+                WHEN LOWER(COALESCE(s.segment_adi, '')) LIKE '%şampiyon%'
+                  OR LOWER(COALESCE(s.segment_adi, '')) LIKE '%sampiyon%'
+                THEN 1 ELSE 0 
+            END) AS sampiyon_musteri
+        FROM musteriler m
+        LEFT JOIN satis_noktalari sn ON m.satis_noktasi_id = sn.satis_noktasi_id
+        LEFT JOIN sehirler se ON sn.sehir_id = se.sehir_id
+        LEFT JOIN rfm_analizi r ON m.musteri_id = r.musteri_id
+        LEFT JOIN segmentler s ON r.segment_id = s.segment_id
+        LEFT JOIN analitik_tahminler a ON m.musteri_id = a.musteri_id
+        {where_sql}
+    """
+
+    summary_row = db.execute(text(summary_query), params).fetchone()
 
     query = f"""
         SELECT 
@@ -89,25 +174,33 @@ def get_all_customers_service(
             m.mail,
             m.gsm_no,
             COALESCE(se.sehir_adi, '-') AS sehir_adi,
-            COALESCE(SUM(CASE WHEN f.belge_tipi_id = 1 THEN f.fatura_tutari ELSE 0 END), 0) AS toplam_harcama,
-            MAX(f.fatura_tarihi) AS son_siparis,
+
+            COALESCE((
+                SELECT SUM(f2.fatura_tutari)
+                FROM faturalar f2
+                WHERE f2.musteri_id = m.musteri_id
+                  AND f2.belge_tipi_id = 1
+                  {date_filter_f2}
+            ), 0) AS toplam_harcama,
+
+            (
+                SELECT MAX(f3.fatura_tarihi)
+                FROM faturalar f3
+                WHERE f3.musteri_id = m.musteri_id
+                  AND f3.belge_tipi_id = 1
+                  {date_filter_f3}
+            ) AS son_siparis,
+
             COALESCE(r.toplam_rfm_skoru, 0) AS rfm_skor,
             COALESCE(s.segment_adi, '-') AS segment_adi,
             COALESCE(a.ltv_tahmini, 0) AS ltv_tahmini,
             COALESCE(a.churn_olasiligi, 0) AS churn_olasiligi
         FROM musteriler m
-        LEFT JOIN satis_noktalari sn 
-            ON m.satis_noktasi_id = sn.satis_noktasi_id
-        LEFT JOIN sehirler se 
-            ON sn.sehir_id = se.sehir_id
-        LEFT JOIN faturalar f 
-            ON m.musteri_id = f.musteri_id
-        LEFT JOIN rfm_analizi r 
-            ON m.musteri_id = r.musteri_id
-        LEFT JOIN segmentler s 
-            ON r.segment_id = s.segment_id
-        LEFT JOIN analitik_tahminler a 
-            ON m.musteri_id = a.musteri_id
+        LEFT JOIN satis_noktalari sn ON m.satis_noktasi_id = sn.satis_noktasi_id
+        LEFT JOIN sehirler se ON sn.sehir_id = se.sehir_id
+        LEFT JOIN rfm_analizi r ON m.musteri_id = r.musteri_id
+        LEFT JOIN segmentler s ON r.segment_id = s.segment_id
+        LEFT JOIN analitik_tahminler a ON m.musteri_id = a.musteri_id
         {where_sql}
         GROUP BY 
             m.musteri_id,
@@ -124,10 +217,7 @@ def get_all_customers_service(
         LIMIT :limit OFFSET :offset
     """
 
-    rows = db.execute(text(query), {
-        "limit": limit,
-        "offset": offset
-    }).fetchall()
+    rows = db.execute(text(query), params).fetchall()
 
     veriler = []
 
@@ -154,6 +244,12 @@ def get_all_customers_service(
         "sayfa": page,
         "limit": limit,
         "toplam_sayfa": total_pages,
+        "ozet": {
+            "toplam_musteri": int(summary_row[0] or 0),
+            "yuksek_riskli": int(summary_row[1] or 0),
+            "ortalama_ltv": float(summary_row[2] or 0),
+            "sampiyon_musteri": int(summary_row[3] or 0)
+        },
         "veriler": veriler
     }
 

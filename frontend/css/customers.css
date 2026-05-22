@@ -1081,3 +1081,50 @@ body.light-mode #pagination .page-dots {
 .sidebar.collapsed .menu-group-title i {
   width: 20px;
 }
+
+.filter-group input {
+  height: 44px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--text);
+  padding: 0 12px;
+  outline: none;
+  font-weight: 700;
+}
+
+.filter-group input:focus {
+  border-color: rgba(255,37,37,0.45);
+}
+
+.filter-group input::placeholder {
+  color: var(--muted);
+}
+
+.filter-group input[type="date"] {
+  color-scheme: dark;
+}
+
+body.light-mode .filter-group input[type="date"] {
+  color-scheme: light;
+}
+
+@media (max-width: 1400px) {
+  .filter-panel {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .filter-buttons {
+    grid-column: span 4;
+  }
+}
+
+@media (max-width: 1050px) {
+  .filter-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-buttons {
+    grid-column: span 1;
+  }
+}

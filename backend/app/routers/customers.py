@@ -38,6 +38,12 @@ def get_all_customers(
     segment: str = "all",
     city: str = "all",
     risk: str = "all",
+    min_ltv: float = Query(0, ge=0),
+    max_ltv: float = Query(0, ge=0),
+    min_spending: float = Query(0, ge=0),
+    max_spending: float = Query(0, ge=0),
+    start_date: str = "",
+    end_date: str = "",
     db: Session = Depends(get_db),
     current_user: Kullanicilar = Depends(permission_required("musteri_goruntule"))
 ):
@@ -49,7 +55,13 @@ def get_all_customers(
         search,
         segment,
         city,
-        risk
+        risk,
+        min_ltv,
+        max_ltv,
+        min_spending,
+        max_spending,
+        start_date,
+        end_date
     )
 
 

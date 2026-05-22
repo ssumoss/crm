@@ -2,15 +2,17 @@ if (!localStorage.getItem("token")) {
   window.location.href = "login.html";
 }
 
-const body = document.body;
-const themeToggle = document.getElementById("themeToggle");
-const sidebarToggle = document.getElementById("sidebarToggle");
-const sidebar = document.getElementById("sidebar");
-
 const searchInput = document.getElementById("searchInput");
 const segmentFilter = document.getElementById("segmentFilter");
 const cityFilter = document.getElementById("cityFilter");
 const riskFilter = document.getElementById("riskFilter");
+
+const minLtvFilter = document.getElementById("minLtvFilter");
+const maxLtvFilter = document.getElementById("maxLtvFilter");
+const minSpendingFilter = document.getElementById("minSpendingFilter");
+const maxSpendingFilter = document.getElementById("maxSpendingFilter");
+const startDateFilter = document.getElementById("startDateFilter");
+const endDateFilter = document.getElementById("endDateFilter");
 
 const tableBody = document.getElementById("customerTableBody");
 const customerCount = document.getElementById("customerCount");
@@ -87,7 +89,13 @@ function getCurrentFilters() {
     search: searchInput.value.trim(),
     segment: segmentFilter.value || "all",
     city: cityFilter.value || "all",
-    risk: riskFilter.value || "all"
+    risk: riskFilter.value || "all",
+    min_ltv: Number(minLtvFilter?.value || 0),
+    max_ltv: Number(maxLtvFilter?.value || 0),
+    min_spending: Number(minSpendingFilter?.value || 0),
+    max_spending: Number(maxSpendingFilter?.value || 0),
+    start_date: startDateFilter?.value || "",
+    end_date: endDateFilter?.value || ""
   };
 }
 
@@ -98,21 +106,18 @@ function buildCustomerQuery(page = 1, limit = pageLimit) {
   params.append("page", page);
   params.append("limit", limit);
 
-  if (filters.search) {
-    params.append("search", filters.search);
-  }
+  if (filters.search) params.append("search", filters.search);
+  if (filters.segment !== "all") params.append("segment", filters.segment);
+  if (filters.city !== "all") params.append("city", filters.city);
+  if (filters.risk !== "all") params.append("risk", filters.risk);
 
-  if (filters.segment !== "all") {
-    params.append("segment", filters.segment);
-  }
+  if (filters.min_ltv > 0) params.append("min_ltv", filters.min_ltv);
+  if (filters.max_ltv > 0) params.append("max_ltv", filters.max_ltv);
+  if (filters.min_spending > 0) params.append("min_spending", filters.min_spending);
+  if (filters.max_spending > 0) params.append("max_spending", filters.max_spending);
 
-  if (filters.city !== "all") {
-    params.append("city", filters.city);
-  }
-
-  if (filters.risk !== "all") {
-    params.append("risk", filters.risk);
-  }
+  if (filters.start_date) params.append("start_date", filters.start_date);
+  if (filters.end_date) params.append("end_date", filters.end_date);
 
   return params.toString();
 }
@@ -125,15 +130,11 @@ async function loadFilterOptions() {
     cityFilter.innerHTML = `<option value="all">Tümü</option>`;
 
     (data.segments || []).forEach(segment => {
-      segmentFilter.innerHTML += `
-        <option value="${segment}">${segment}</option>
-      `;
+      segmentFilter.innerHTML += `<option value="${segment}">${segment}</option>`;
     });
 
     (data.cities || []).forEach(city => {
-      cityFilter.innerHTML += `
-        <option value="${city}">${city}</option>
-      `;
+      cityFilter.innerHTML += `<option value="${city}">${city}</option>`;
     });
 
   } catch (error) {
@@ -184,7 +185,7 @@ async function loadCustomers(page = 1) {
 
     filteredCustomers = [...customers];
 
-    updateSummaryCards();
+    updateSummaryCards(data.ozet);
     renderTable(filteredCustomers);
     renderPagination();
 
@@ -199,23 +200,19 @@ async function loadCustomers(page = 1) {
   }
 }
 
-function updateSummaryCards() {
-  const totalCustomer = totalCustomerCount || customers.length;
+function updateSummaryCards(summary) {
+  if (!summary) {
+    totalCustomerCard.textContent = "0";
+    highRiskCard.textContent = "0";
+    avgLtvCard.textContent = "₺0";
+    championCard.textContent = "0";
+    return;
+  }
 
-  const highRiskCount = customers.filter(customer => customer.churn === "Yüksek").length;
-
-  const totalLtv = customers.reduce((sum, customer) => sum + Number(customer.ltv || 0), 0);
-  const avgLtv = customers.length > 0 ? totalLtv / customers.length : 0;
-
-  const championCount = customers.filter(customer => {
-    const segment = (customer.segment || "").toLowerCase();
-    return segment.includes("şampiyon") || segment.includes("sampiyon");
-  }).length;
-
-  totalCustomerCard.textContent = formatNumber(totalCustomer);
-  highRiskCard.textContent = formatNumber(highRiskCount);
-  avgLtvCard.textContent = formatMoney(avgLtv);
-  championCard.textContent = formatNumber(championCount);
+  totalCustomerCard.textContent = formatNumber(summary.toplam_musteri || 0);
+  highRiskCard.textContent = formatNumber(summary.yuksek_riskli || 0);
+  avgLtvCard.textContent = formatMoney(summary.ortalama_ltv || 0);
+  championCard.textContent = formatNumber(summary.sampiyon_musteri || 0);
 }
 
 function renderTable(data) {
@@ -403,21 +400,8 @@ async function exportCustomers() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
-    const filters = getCurrentFilters();
-
     link.href = url;
-
-    if (
-      filters.search ||
-      filters.segment !== "all" ||
-      filters.city !== "all" ||
-      filters.risk !== "all"
-    ) {
-      link.download = "filtreli_musteriler.csv";
-    } else {
-      link.download = "tum_musteriler.csv";
-    }
-
+    link.download = "filtreli_musteriler.csv";
     link.click();
 
     URL.revokeObjectURL(url);
@@ -427,8 +411,6 @@ async function exportCustomers() {
     alert("Müşteriler indirilirken hata oluştu.");
   }
 }
-
-
 
 searchInput.addEventListener("input", () => {
   clearTimeout(searchInput._timer);
@@ -441,6 +423,27 @@ searchInput.addEventListener("input", () => {
 segmentFilter.addEventListener("change", applyFilters);
 cityFilter.addEventListener("change", applyFilters);
 riskFilter.addEventListener("change", applyFilters);
+
+[
+  minLtvFilter,
+  maxLtvFilter,
+  minSpendingFilter,
+  maxSpendingFilter,
+  startDateFilter,
+  endDateFilter
+].forEach(input => {
+  if (!input) return;
+
+  input.addEventListener("input", () => {
+    clearTimeout(input._timer);
+
+    input._timer = setTimeout(() => {
+      applyFilters();
+    }, 500);
+  });
+
+  input.addEventListener("change", applyFilters);
+});
 
 tableBody.addEventListener("change", event => {
   if (event.target.classList.contains("row-check")) {
