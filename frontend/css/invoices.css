@@ -1475,3 +1475,77 @@ body.light-mode #pagination .page-btn.active {
   background: var(--red);
   color: #fff;
 }
+/* =========================
+   INVOICE FILTERS
+========================= */
+
+.invoice-filter-actions {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.invoice-filter-actions input {
+  background: var(--card-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-weight: 800;
+  font-size: 13px;
+  outline: none;
+  min-height: 38px;
+}
+
+.invoice-filter-actions input::placeholder {
+  color: var(--muted);
+}
+
+.invoice-filter-actions input[type="date"] {
+  min-width: 145px;
+}
+
+.invoice-filter-actions input[type="number"] {
+  width: 115px;
+}
+
+#clearInvoiceFiltersBtn {
+  border: none;
+  background: linear-gradient(135deg, var(--red), var(--red-2));
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 13px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: 0.25s ease;
+}
+
+#clearInvoiceFiltersBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(255,37,37,0.28);
+}
+
+body.light-mode .invoice-filter-actions input {
+  background: rgba(0,0,0,0.04);
+  color: #111827;
+}
+
+@media (max-width: 900px) {
+  .invoice-filter-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .invoice-filter-actions select,
+  .invoice-filter-actions input,
+  #clearInvoiceFiltersBtn {
+    width: 100%;
+  }
+
+  .invoice-filter-actions input[type="date"],
+  .invoice-filter-actions input[type="number"] {
+    width: 100%;
+  }
+}

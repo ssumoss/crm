@@ -1,15 +1,56 @@
 from sqlalchemy import text
 
 
-def get_all_invoices_service(db, page: int = 1, limit: int = 50):
+def get_all_invoices_service(
+    db,
+    page: int = 1,
+    limit: int = 50,
+    search: str | None = None,
+    belge_tipi: str | None = None,
+    satis_noktasi: str | None = None
+):
     offset = (page - 1) * limit
 
-    total_count = db.execute(text("""
-        SELECT COUNT(*) 
-        FROM faturalar
-    """)).scalar()
+    where = ["1=1"]
+    params = {
+        "limit": limit,
+        "offset": offset
+    }
 
-    rows = db.execute(text("""
+    if search:
+        where.append("""
+            (
+                f.fatura_no LIKE :search
+                OR m.musteri_adi LIKE :search
+                OR m.musteri_soyadi LIKE :search
+                OR sn.satis_noktasi_adi LIKE :search
+            )
+        """)
+        params["search"] = f"%{search}%"
+
+    if belge_tipi and belge_tipi != "all":
+        where.append("bt.belge_tipi_adi = :belge_tipi")
+        params["belge_tipi"] = belge_tipi
+
+    if satis_noktasi and satis_noktasi != "all":
+        where.append("sn.satis_noktasi_adi = :satis_noktasi")
+        params["satis_noktasi"] = satis_noktasi
+
+    where_sql = " AND ".join(where)
+
+    total_count = db.execute(text(f"""
+        SELECT COUNT(DISTINCT f.fatura_no)
+        FROM faturalar f
+        LEFT JOIN musteriler m 
+            ON f.musteri_id = m.musteri_id
+        LEFT JOIN belge_tipi bt 
+            ON f.belge_tipi_id = bt.belge_tipi_id
+        LEFT JOIN satis_noktalari sn 
+            ON f.satis_noktasi_id = sn.satis_noktasi_id
+        WHERE {where_sql}
+    """), params).scalar()
+
+    rows = db.execute(text(f"""
         SELECT
             f.fatura_no,
             CONCAT(m.musteri_adi, ' ', m.musteri_soyadi) AS musteri,
@@ -27,6 +68,7 @@ def get_all_invoices_service(db, page: int = 1, limit: int = 50):
             ON f.satis_noktasi_id = sn.satis_noktasi_id
         LEFT JOIN siparis_detaylari sd 
             ON f.fatura_no = sd.fatura_no
+        WHERE {where_sql}
         GROUP BY
             f.fatura_no,
             m.musteri_adi,
@@ -37,10 +79,7 @@ def get_all_invoices_service(db, page: int = 1, limit: int = 50):
             sn.satis_noktasi_adi
         ORDER BY f.fatura_tarihi DESC
         LIMIT :limit OFFSET :offset
-    """), {
-        "limit": limit,
-        "offset": offset
-    }).fetchall()
+    """), params).fetchall()
 
     total_count = int(total_count or 0)
     toplam_sayfa = (total_count + limit - 1) // limit
@@ -97,9 +136,7 @@ def get_invoice_monthly_trend_service(db, year: int):
         WHERE YEAR(fatura_tarihi) = :year
         GROUP BY MONTH(fatura_tarihi)
         ORDER BY ay
-    """), {
-        "year": year
-    }).fetchall()
+    """), {"year": year}).fetchall()
 
     months = [
         "Oca", "Şub", "Mar", "Nis", "May", "Haz",
@@ -146,9 +183,7 @@ def get_invoice_basket_analysis_service(db, year: int):
         GROUP BY kalem_sayisi
         ORDER BY fatura_sayisi DESC
         LIMIT 5
-    """), {
-        "year": year
-    }).fetchall()
+    """), {"year": year}).fetchall()
 
     return [
         {

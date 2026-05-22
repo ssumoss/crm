@@ -18,11 +18,21 @@ router = APIRouter(prefix="/invoices", tags=["Invoices"])
 def get_all_invoices(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=500),
+    search: str | None = Query(None),
+    belge_tipi: str | None = Query(None),
+    satis_noktasi: str | None = Query(None),
     db: Session = Depends(get_db),
     current_user: Kullanicilar = Depends(permission_required("musteri_goruntule"))
 ):
     try:
-        return get_all_invoices_service(db, page, limit)
+        return get_all_invoices_service(
+            db=db,
+            page=page,
+            limit=limit,
+            search=search,
+            belge_tipi=belge_tipi,
+            satis_noktasi=satis_noktasi
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -31,11 +41,21 @@ def get_all_invoices(
 def get_all_invoices_no_slash(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=500),
+    search: str | None = Query(None),
+    belge_tipi: str | None = Query(None),
+    satis_noktasi: str | None = Query(None),
     db: Session = Depends(get_db),
     current_user: Kullanicilar = Depends(permission_required("musteri_goruntule"))
 ):
     try:
-        return get_all_invoices_service(db, page, limit)
+        return get_all_invoices_service(
+            db=db,
+            page=page,
+            limit=limit,
+            search=search,
+            belge_tipi=belge_tipi,
+            satis_noktasi=satis_noktasi
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -61,6 +81,7 @@ def get_invoice_monthly_trend(
         return get_invoice_monthly_trend_service(db, year)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/basket-analysis")
 def get_invoice_basket_analysis(

@@ -341,7 +341,7 @@
             <p id="invoiceCount">0 kayıt listeleniyor</p>
           </div>
 
-          <div class="table-actions">
+          <div class="table-actions invoice-filter-actions">
             <select id="docTypeFilter">
               <option value="all">Belge Tipi: Tümü</option>
               <option value="Satış">Satış</option>
@@ -351,6 +351,17 @@
             <select id="salesPointFilter">
               <option value="all">Satış Noktası: Tümü</option>
             </select>
+
+            <input id="startDateFilter" type="date" title="Başlangıç tarihi" />
+            <input id="endDateFilter" type="date" title="Bitiş tarihi" />
+
+            <input id="minAmountFilter" type="number" min="0" placeholder="Min tutar" />
+            <input id="maxAmountFilter" type="number" min="0" placeholder="Max tutar" />
+
+            <button id="clearInvoiceFiltersBtn" type="button">
+              <i class="fa-solid fa-filter-circle-xmark"></i>
+              Temizle
+            </button>
           </div>
         </div>
 
@@ -426,7 +437,9 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>Fatura Detayı</h3>
-        <button id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+        <button id="closeModal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <div class="modal-content" id="modalContent"></div>

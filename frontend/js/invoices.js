@@ -14,6 +14,12 @@ const invoiceSearch = document.getElementById("invoiceSearch");
 const docTypeFilter = document.getElementById("docTypeFilter");
 const salesPointFilter = document.getElementById("salesPointFilter");
 
+const startDateFilter = document.getElementById("startDateFilter");
+const endDateFilter = document.getElementById("endDateFilter");
+const minAmountFilter = document.getElementById("minAmountFilter");
+const maxAmountFilter = document.getElementById("maxAmountFilter");
+const clearInvoiceFiltersBtn = document.getElementById("clearInvoiceFiltersBtn");
+
 const invoiceTableBody = document.getElementById("invoiceTableBody");
 const invoiceCount = document.getElementById("invoiceCount");
 const pagination = document.getElementById("pagination");
@@ -163,24 +169,15 @@ function renderOrderTrendChart(data) {
       type: "area",
       height: 280
     },
-    series: [
-      {
-        name: "Satış Siparişi",
-        data: salesCounts
-      }
-    ],
-    xaxis: {
-      categories: months
-    },
+    series: [{ name: "Satış Siparişi", data: salesCounts }],
+    xaxis: { categories: months },
     yaxis: {
       labels: {
         formatter: value => Math.round(value)
       }
     },
     colors: ["#ff2525"],
-    dataLabels: {
-      enabled: false
-    },
+    dataLabels: { enabled: false },
     stroke: {
       curve: "smooth",
       width: 4
@@ -194,9 +191,7 @@ function renderOrderTrendChart(data) {
     },
     markers: {
       size: 0,
-      hover: {
-        size: 7
-      }
+      hover: { size: 7 }
     },
     tooltip: {
       enabled: true,
@@ -238,9 +233,7 @@ function renderDocTypeChart(summary) {
     series: [saleCount, returnCount],
     labels: ["Satış", "İade"],
     colors: ["#2279d6", "#ff2525"],
-    stroke: {
-      colors: ["transparent"]
-    },
+    stroke: { colors: ["transparent"] },
     legend: {
       position: "bottom",
       fontWeight: 800,
@@ -297,15 +290,8 @@ function renderReturnTrendChart(data) {
       type: "bar",
       height: 280
     },
-    series: [
-      {
-        name: "İade",
-        data: returnCounts
-      }
-    ],
-    xaxis: {
-      categories: months
-    },
+    series: [{ name: "İade", data: returnCounts }],
+    xaxis: { categories: months },
     yaxis: {
       labels: {
         formatter: value => Math.round(value)
@@ -318,9 +304,7 @@ function renderReturnTrendChart(data) {
         columnWidth: "50%"
       }
     },
-    dataLabels: {
-      enabled: false
-    },
+    dataLabels: { enabled: false },
     tooltip: {
       enabled: true,
       custom: function ({ series, seriesIndex, dataPointIndex, w }) {
@@ -366,6 +350,43 @@ function renderBasketAnalysis(data) {
   });
 }
 
+function buildInvoiceQueryParams(page) {
+  const params = new URLSearchParams();
+
+  params.append("page", page);
+  params.append("limit", pageLimit);
+
+  if (invoiceSearch && invoiceSearch.value.trim()) {
+    params.append("search", invoiceSearch.value.trim());
+  }
+
+  if (docTypeFilter && docTypeFilter.value !== "all") {
+    params.append("belge_tipi", docTypeFilter.value);
+  }
+
+  if (salesPointFilter && salesPointFilter.value !== "all") {
+    params.append("satis_noktasi", salesPointFilter.value);
+  }
+
+  if (startDateFilter && startDateFilter.value) {
+    params.append("start_date", startDateFilter.value);
+  }
+
+  if (endDateFilter && endDateFilter.value) {
+    params.append("end_date", endDateFilter.value);
+  }
+
+  if (minAmountFilter && minAmountFilter.value) {
+    params.append("min_tutar", minAmountFilter.value);
+  }
+
+  if (maxAmountFilter && maxAmountFilter.value) {
+    params.append("max_tutar", maxAmountFilter.value);
+  }
+
+  return params;
+}
+
 async function loadInvoices(page = 1) {
   try {
     currentPage = page;
@@ -378,7 +399,8 @@ async function loadInvoices(page = 1) {
       `;
     }
 
-    const data = await apiRequest(`/invoices/?page=${currentPage}&limit=${pageLimit}`);
+    const params = buildInvoiceQueryParams(currentPage);
+    const data = await apiRequest(`/invoices/?${params.toString()}`);
 
     if (!data || !Array.isArray(data.veriler)) {
       invoiceTableBody.innerHTML = `
@@ -431,12 +453,20 @@ function renderTable(data) {
   data.forEach(invoice => {
     const tr = document.createElement("tr");
 
+    const docTypeClass = normalizeTR(invoice.belge_tipi).includes("iade")
+      ? "return"
+      : "sale";
+
     tr.innerHTML = `
       <td>${safeText(invoice.fatura_no)}</td>
       <td>${safeText(invoice.musteri)}</td>
       <td>${formatMoney(invoice.tutar)}</td>
       <td>${formatDate(invoice.tarih)}</td>
-      <td>${safeText(invoice.belge_tipi)}</td>
+      <td>
+        <span class="badge ${docTypeClass}">
+          ${safeText(invoice.belge_tipi)}
+        </span>
+      </td>
       <td>${safeText(invoice.satis_noktasi)}</td>
       <td>${safeText(invoice.kalem_sayisi)}</td>
       <td>
@@ -530,45 +560,29 @@ function fillSalesPointFilter() {
     )
   ];
 
+  if (currentValue !== "all" && currentValue) return;
+
   salesPointFilter.innerHTML = `<option value="all">Satış Noktası: Tümü</option>`;
 
   salesPoints.forEach(point => {
     salesPointFilter.innerHTML += `<option value="${point}">${point}</option>`;
   });
-
-  if (salesPoints.includes(currentValue)) {
-    salesPointFilter.value = currentValue;
-  }
 }
 
 function applyFilters() {
-  const searchValue = invoiceSearch ? normalizeTR(invoiceSearch.value.trim()) : "";
-  const docTypeValue = docTypeFilter ? docTypeFilter.value : "all";
-  const salesPointValue = salesPointFilter ? salesPointFilter.value : "all";
+  loadInvoices(1);
+}
 
-  filteredInvoices = allInvoices.filter(invoice => {
-    const invoiceNo = normalizeTR(invoice.fatura_no);
-    const customer = normalizeTR(invoice.musteri);
-    const salesPoint = normalizeTR(invoice.satis_noktasi);
-    const docType = String(invoice.belge_tipi || "");
+function clearInvoiceFilters() {
+  if (invoiceSearch) invoiceSearch.value = "";
+  if (docTypeFilter) docTypeFilter.value = "all";
+  if (salesPointFilter) salesPointFilter.value = "all";
+  if (startDateFilter) startDateFilter.value = "";
+  if (endDateFilter) endDateFilter.value = "";
+  if (minAmountFilter) minAmountFilter.value = "";
+  if (maxAmountFilter) maxAmountFilter.value = "";
 
-    const searchMatch =
-      invoiceNo.includes(searchValue) ||
-      customer.includes(searchValue) ||
-      salesPoint.includes(searchValue);
-
-    const docMatch =
-      docTypeValue === "all" ||
-      normalizeTR(docType) === normalizeTR(docTypeValue);
-
-    const salesPointMatch =
-      salesPointValue === "all" ||
-      invoice.satis_noktasi === salesPointValue;
-
-    return searchMatch && docMatch && salesPointMatch;
-  });
-
-  renderTable(filteredInvoices);
+  loadInvoices(1);
 }
 
 function openModal(faturaNo) {
@@ -627,7 +641,7 @@ function setupEvents() {
   if (invoiceSearch) {
     invoiceSearch.addEventListener("input", () => {
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(applyFilters, 300);
+      searchTimer = setTimeout(applyFilters, 400);
     });
   }
 
@@ -637,6 +651,32 @@ function setupEvents() {
 
   if (salesPointFilter) {
     salesPointFilter.addEventListener("change", applyFilters);
+  }
+
+  if (startDateFilter) {
+    startDateFilter.addEventListener("change", applyFilters);
+  }
+
+  if (endDateFilter) {
+    endDateFilter.addEventListener("change", applyFilters);
+  }
+
+  if (minAmountFilter) {
+    minAmountFilter.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilters, 500);
+    });
+  }
+
+  if (maxAmountFilter) {
+    maxAmountFilter.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilters, 500);
+    });
+  }
+
+  if (clearInvoiceFiltersBtn) {
+    clearInvoiceFiltersBtn.addEventListener("click", clearInvoiceFilters);
   }
 
   if (orderTrendYear) {
