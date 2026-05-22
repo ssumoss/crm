@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -29,10 +29,34 @@ def get_products_summary(
 
 @router.get("/")
 def get_all_products(
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    search: str | None = Query(None),
+    marka: str | None = Query(None),
+    performance: str | None = Query(None),
+    min_satis: int | None = Query(None),
+    max_satis: int | None = Query(None),
+    min_ciro: float | None = Query(None),
+    max_ciro: float | None = Query(None),
+    min_skor: float | None = Query(None),
+    max_skor: float | None = Query(None),
     db: Session = Depends(get_db),
     current_user: Kullanicilar = Depends(permission_required("dashboard_goruntule"))
 ):
-    return get_all_products_service(db)
+    return get_all_products_service(
+        db=db,
+        page=page,
+        limit=limit,
+        search=search,
+        marka=marka,
+        performance=performance,
+        min_satis=min_satis,
+        max_satis=max_satis,
+        min_ciro=min_ciro,
+        max_ciro=max_ciro,
+        min_skor=min_skor,
+        max_skor=max_skor
+    )
 
 
 @router.get("/top-selling")

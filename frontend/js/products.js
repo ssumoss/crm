@@ -1,6 +1,15 @@
 const productSearch = document.getElementById("productSearch");
 const categoryFilter = document.getElementById("categoryFilter");
 const performanceFilter = document.getElementById("performanceFilter");
+
+const minSalesFilter = document.getElementById("minSalesFilter");
+const maxSalesFilter = document.getElementById("maxSalesFilter");
+const minRevenueFilter = document.getElementById("minRevenueFilter");
+const maxRevenueFilter = document.getElementById("maxRevenueFilter");
+const minScoreFilter = document.getElementById("minScoreFilter");
+const maxScoreFilter = document.getElementById("maxScoreFilter");
+
+const clearProductFiltersBtn = document.getElementById("clearProductFiltersBtn");
 const exportBtn = document.getElementById("exportBtn");
 
 const totalProducts = document.getElementById("totalProducts");
@@ -16,12 +25,19 @@ const revenueBars = document.getElementById("revenueBars");
 const bundleList = document.getElementById("bundleList");
 const productTableBody = document.getElementById("productTableBody");
 const productCount = document.getElementById("productCount");
+const productPagination = document.getElementById("productPagination");
 
 let products = [];
 let filteredProducts = [];
 
+let currentPage = 1;
+const pageLimit = 10;
+let totalPages = 1;
+let totalProductCount = 0;
+
 let topProductsApexChart = null;
 let revenueApexChart = null;
+let searchTimer = null;
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString("tr-TR");
@@ -128,19 +144,10 @@ function createTooltip(title, value) {
       font-family:Inter, sans-serif;
       min-width:140px;
     ">
-      <div style="
-        font-size:12px;
-        color:${theme.mutedColor};
-        font-weight:800;
-        margin-bottom:5px;
-      ">
+      <div style="font-size:12px;color:${theme.mutedColor};font-weight:800;margin-bottom:5px;">
         ${title}
       </div>
-      <div style="
-        font-size:15px;
-        color:${theme.textColor};
-        font-weight:900;
-      ">
+      <div style="font-size:15px;color:${theme.textColor};font-weight:900;">
         ${value}
       </div>
     </div>
@@ -167,14 +174,122 @@ async function loadProductsSummary() {
   }
 }
 
-async function loadProducts() {
-  const data = await apiRequest("/products/");
+function buildProductQueryParams(page = 1) {
+  const params = new URLSearchParams();
 
-  products = (data?.veriler || []).map(normalizeProduct);
-  filteredProducts = [...products];
+  params.append("page", page);
+  params.append("limit", pageLimit);
 
-  fillBrandFilter(products);
-  renderAll(filteredProducts);
+  if (productSearch && productSearch.value.trim()) {
+    params.append("search", productSearch.value.trim());
+  }
+
+  if (categoryFilter && categoryFilter.value !== "all") {
+    params.append("marka", categoryFilter.value);
+  }
+
+  if (performanceFilter && performanceFilter.value !== "all") {
+    params.append("performance", performanceFilter.value);
+  }
+
+  if (minSalesFilter && minSalesFilter.value) {
+    params.append("min_satis", minSalesFilter.value);
+  }
+
+  if (maxSalesFilter && maxSalesFilter.value) {
+    params.append("max_satis", maxSalesFilter.value);
+  }
+
+  if (minRevenueFilter && minRevenueFilter.value) {
+    params.append("min_ciro", minRevenueFilter.value);
+  }
+
+  if (maxRevenueFilter && maxRevenueFilter.value) {
+    params.append("max_ciro", maxRevenueFilter.value);
+  }
+
+  if (minScoreFilter && minScoreFilter.value) {
+    params.append("min_skor", minScoreFilter.value);
+  }
+
+  if (maxScoreFilter && maxScoreFilter.value) {
+    params.append("max_skor", maxScoreFilter.value);
+  }
+
+  return params;
+}
+
+async function loadProducts(page = 1) {
+  try {
+    currentPage = page;
+
+    if (productTableBody) {
+      productTableBody.innerHTML = `
+        <tr>
+          <td colspan="8">Ürünler yükleniyor...</td>
+        </tr>
+      `;
+    }
+
+    const params = buildProductQueryParams(currentPage);
+    const data = await apiRequest(`/products/?${params.toString()}`);
+
+    if (!data || !Array.isArray(data.veriler)) {
+      if (productTableBody) {
+        productTableBody.innerHTML = `
+          <tr>
+            <td colspan="8">Ürün verisi alınamadı.</td>
+          </tr>
+        `;
+      }
+      return;
+    }
+
+    products = data.veriler.map(normalizeProduct);
+    filteredProducts = [...products];
+
+    totalPages = Number(data.toplam_sayfa || 1);
+    totalProductCount = Number(data.toplam_kayit || data.kayit_sayisi || 0);
+
+    await fillBrandFilter();
+
+    renderAll(filteredProducts);
+    renderPagination();
+
+  } catch (error) {
+    console.error("Ürün verisi çekme hatası:", error);
+
+    if (productTableBody) {
+      productTableBody.innerHTML = `
+        <tr>
+          <td colspan="8">Ürün verileri yüklenemedi. API, token veya yetki kontrol edilmeli.</td>
+        </tr>
+      `;
+    }
+  }
+}
+
+async function fillBrandFilter() {
+  if (!categoryFilter) return;
+
+  const currentValue = categoryFilter.value;
+
+  const data = await apiRequest("/products/?page=1&limit=100");
+  const list = Array.isArray(data?.veriler) ? data.veriler.map(normalizeProduct) : [];
+
+  const brands = [...new Set(list.map(item => item.brand).filter(Boolean))];
+
+  categoryFilter.innerHTML = `<option value="all">Tümü</option>`;
+
+  brands.forEach(brand => {
+    categoryFilter.innerHTML += `
+      <option value="${brand}">${brand}</option>
+    `;
+  });
+
+  if (brands.includes(currentValue)) {
+    categoryFilter.value = currentValue;
+  }
 }
 
 async function loadBundles() {
@@ -211,6 +326,7 @@ async function loadBundles() {
         </div>
       `;
     });
+
   } catch (error) {
     console.error("Birlikte satılan ürünler yüklenemedi:", error);
 
@@ -227,31 +343,18 @@ async function loadBundles() {
   }
 }
 
-function fillBrandFilter(data) {
-  if (!categoryFilter) return;
-
-  const brands = [...new Set(data.map(item => item.brand).filter(Boolean))];
-
-  categoryFilter.innerHTML = `<option value="all">Tümü</option>`;
-
-  brands.forEach(brand => {
-    categoryFilter.innerHTML += `
-      <option value="${brand}">${brand}</option>
-    `;
-  });
-}
-
 function renderTable(data) {
   if (!productTableBody || !productCount) return;
 
   productTableBody.innerHTML = "";
 
-  if (data.length === 0) {
+  if (!data.length) {
     productTableBody.innerHTML = `
       <tr>
         <td colspan="8">Ürün bulunamadı.</td>
       </tr>
     `;
+
     productCount.textContent = "0 ürün listeleniyor";
     return;
   }
@@ -275,7 +378,72 @@ function renderTable(data) {
     `;
   });
 
-  productCount.textContent = `${formatNumber(data.length)} ürün listeleniyor`;
+  productCount.textContent =
+    `${formatNumber(totalProductCount)} ürün içinden bu sayfada ${formatNumber(data.length)} ürün gösteriliyor`;
+}
+
+function renderPagination() {
+  if (!productPagination) return;
+
+  productPagination.innerHTML = "";
+
+  if (totalPages <= 1) return;
+
+  function createPageButton(text, page, isActive = false, isDisabled = false) {
+    const btn = document.createElement("button");
+    btn.textContent = text;
+    btn.className = isActive ? "page-btn active" : "page-btn";
+    btn.disabled = isDisabled;
+
+    if (!isDisabled && page) {
+      btn.addEventListener("click", () => {
+        loadProducts(page);
+      });
+    }
+
+    return btn;
+  }
+
+  productPagination.appendChild(
+    createPageButton("‹", currentPage - 1, false, currentPage === 1)
+  );
+
+  productPagination.appendChild(
+    createPageButton("1", 1, currentPage === 1)
+  );
+
+  if (currentPage > 4) {
+    const dots = document.createElement("span");
+    dots.className = "page-dots";
+    dots.textContent = "...";
+    productPagination.appendChild(dots);
+  }
+
+  const startPage = Math.max(2, currentPage - 1);
+  const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+  for (let i = startPage; i <= endPage; i++) {
+    productPagination.appendChild(
+      createPageButton(String(i), i, i === currentPage)
+    );
+  }
+
+  if (currentPage < totalPages - 3) {
+    const dots = document.createElement("span");
+    dots.className = "page-dots";
+    dots.textContent = "...";
+    productPagination.appendChild(dots);
+  }
+
+  if (totalPages > 1) {
+    productPagination.appendChild(
+      createPageButton(String(totalPages), totalPages, currentPage === totalPages)
+    );
+  }
+
+  productPagination.appendChild(
+    createPageButton("›", currentPage + 1, false, currentPage === totalPages)
+  );
 }
 
 function renderTopProducts(data) {
@@ -522,26 +690,22 @@ function renderAll(data) {
 }
 
 function applyFilters() {
-  const searchValue = productSearch ? normalizeTR(productSearch.value.trim()) : "";
-  const brandValue = categoryFilter ? categoryFilter.value : "all";
-  const performanceValue = performanceFilter ? performanceFilter.value : "all";
+  loadProducts(1);
+}
 
-  filteredProducts = products.filter(product => {
-    const searchMatch =
-      normalizeTR(product.name).includes(searchValue) ||
-      normalizeTR(product.brand).includes(searchValue) ||
-      normalizeTR(product.code).includes(searchValue);
+function clearProductFilters() {
+  if (productSearch) productSearch.value = "";
+  if (categoryFilter) categoryFilter.value = "all";
+  if (performanceFilter) performanceFilter.value = "all";
 
-    const brandMatch =
-      brandValue === "all" || product.brand === brandValue;
+  if (minSalesFilter) minSalesFilter.value = "";
+  if (maxSalesFilter) maxSalesFilter.value = "";
+  if (minRevenueFilter) minRevenueFilter.value = "";
+  if (maxRevenueFilter) maxRevenueFilter.value = "";
+  if (minScoreFilter) minScoreFilter.value = "";
+  if (maxScoreFilter) maxScoreFilter.value = "";
 
-    const performanceMatch =
-      performanceValue === "all" || product.performance === performanceValue;
-
-    return searchMatch && brandMatch && performanceMatch;
-  });
-
-  renderAll(filteredProducts);
+  loadProducts(1);
 }
 
 function cleanCsvValue(value) {
@@ -577,10 +741,44 @@ function exportProducts() {
 }
 
 function bindEvents() {
-  if (productSearch) productSearch.addEventListener("input", applyFilters);
-  if (categoryFilter) categoryFilter.addEventListener("change", applyFilters);
-  if (performanceFilter) performanceFilter.addEventListener("change", applyFilters);
-  if (exportBtn) exportBtn.addEventListener("click", exportProducts);
+  if (productSearch) {
+    productSearch.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilters, 400);
+    });
+  }
+
+  if (categoryFilter) {
+    categoryFilter.addEventListener("change", applyFilters);
+  }
+
+  if (performanceFilter) {
+    performanceFilter.addEventListener("change", applyFilters);
+  }
+
+  [
+    minSalesFilter,
+    maxSalesFilter,
+    minRevenueFilter,
+    maxRevenueFilter,
+    minScoreFilter,
+    maxScoreFilter
+  ].forEach(input => {
+    if (input) {
+      input.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(applyFilters, 500);
+      });
+    }
+  });
+
+  if (clearProductFiltersBtn) {
+    clearProductFiltersBtn.addEventListener("click", clearProductFilters);
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener("click", exportProducts);
+  }
 }
 
 async function initProductsPage() {
@@ -588,9 +786,10 @@ async function initProductsPage() {
     bindEvents();
 
     await loadProductsSummary();
-    await loadProducts();
+    await loadProducts(1);
     await loadBundles();
     await loadProductAiActions();
+
   } catch (error) {
     console.error("Ürünler sayfası yüklenemedi:", error);
 

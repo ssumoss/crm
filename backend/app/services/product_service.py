@@ -1,6 +1,21 @@
 from sqlalchemy import text
 
 
+def calculate_performance(satis, ciro, max_satis, max_ciro):
+    satis_skor = (satis / max_satis) * 50 if max_satis else 0
+    ciro_skor = (ciro / max_ciro) * 50 if max_ciro else 0
+    performans_skoru = round(satis_skor + ciro_skor, 2)
+
+    if performans_skoru >= 75:
+        performans = "Yüksek"
+    elif performans_skoru >= 45:
+        performans = "Orta"
+    else:
+        performans = "Düşük"
+
+    return performans_skoru, performans
+
+
 def get_products_summary_service(db):
     row = db.execute(text("""
         SELECT
@@ -88,8 +103,40 @@ def get_products_summary_service(db):
     }
 
 
-def get_all_products_service(db):
-    rows = db.execute(text("""
+def get_all_products_service(
+    db,
+    page: int = 1,
+    limit: int = 10,
+    search: str | None = None,
+    marka: str | None = None,
+    performance: str | None = None,
+    min_satis: int | None = None,
+    max_satis: int | None = None,
+    min_ciro: float | None = None,
+    max_ciro: float | None = None,
+    min_skor: float | None = None,
+    max_skor: float | None = None
+):
+    where = ["1=1"]
+    params = {}
+
+    if search:
+        where.append("""
+            (
+                u.urun_adi LIKE :search
+                OR u.urun_kodu LIKE :search
+                OR COALESCE(m.marka_adi, '') LIKE :search
+            )
+        """)
+        params["search"] = f"%{search}%"
+
+    if marka and marka != "all":
+        where.append("COALESCE(m.marka_adi, '-') = :marka")
+        params["marka"] = marka
+
+    where_sql = " AND ".join(where)
+
+    rows = db.execute(text(f"""
         SELECT
             u.urun_id,
             u.urun_kodu,
@@ -104,16 +151,17 @@ def get_all_products_service(db):
             ON u.urun_id = sd.urun_id
         LEFT JOIN faturalar f
             ON sd.fatura_no = f.fatura_no
+        WHERE {where_sql}
         GROUP BY
             u.urun_id,
             u.urun_kodu,
             u.urun_adi,
             m.marka_adi
         ORDER BY toplam_ciro DESC
-    """)).fetchall()
+    """), params).fetchall()
 
-    max_satis = max([int(r[4] or 0) for r in rows], default=1)
-    max_ciro = max([float(r[5] or 0) for r in rows], default=1)
+    max_satis_value = max([int(r[4] or 0) for r in rows], default=1)
+    max_ciro_value = max([float(r[5] or 0) for r in rows], default=1)
 
     veriler = []
 
@@ -121,18 +169,14 @@ def get_all_products_service(db):
         satis = int(r[4] or 0)
         ciro = float(r[5] or 0)
 
-        satis_skor = (satis / max_satis) * 50 if max_satis else 0
-        ciro_skor = (ciro / max_ciro) * 50 if max_ciro else 0
-        performans_skoru = round(satis_skor + ciro_skor, 2)
+        performans_skoru, performans = calculate_performance(
+            satis=satis,
+            ciro=ciro,
+            max_satis=max_satis_value,
+            max_ciro=max_ciro_value
+        )
 
-        if performans_skoru >= 75:
-            performans = "Yüksek"
-        elif performans_skoru >= 45:
-            performans = "Orta"
-        else:
-            performans = "Düşük"
-
-        veriler.append({
+        item = {
             "urun_id": r[0],
             "urun_kodu": r[1],
             "urun_adi": r[2],
@@ -141,11 +185,45 @@ def get_all_products_service(db):
             "toplam_ciro": ciro,
             "performans_skoru": performans_skoru,
             "performans": performans
-        })
+        }
+
+        if performance and performance != "all" and item["performans"] != performance:
+            continue
+
+        if min_satis is not None and item["toplam_satis_adedi"] < min_satis:
+            continue
+
+        if max_satis is not None and item["toplam_satis_adedi"] > max_satis:
+            continue
+
+        if min_ciro is not None and item["toplam_ciro"] < min_ciro:
+            continue
+
+        if max_ciro is not None and item["toplam_ciro"] > max_ciro:
+            continue
+
+        if min_skor is not None and item["performans_skoru"] < min_skor:
+            continue
+
+        if max_skor is not None and item["performans_skoru"] > max_skor:
+            continue
+
+        veriler.append(item)
+
+    total_count = len(veriler)
+    toplam_sayfa = (total_count + limit - 1) // limit if limit else 1
+
+    offset = (page - 1) * limit
+    paginated_data = veriler[offset:offset + limit]
 
     return {
-        "kayit_sayisi": len(veriler),
-        "veriler": veriler
+        "kayit_sayisi": total_count,
+        "toplam_kayit": total_count,
+        "toplam_sayfa": toplam_sayfa,
+        "page": int(page),
+        "limit": int(limit),
+        "offset": int(offset),
+        "veriler": paginated_data
     }
 
 
