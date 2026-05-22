@@ -826,35 +826,35 @@ function setupDashboardSearch() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+function setLoggedUserName() {
   const user = JSON.parse(localStorage.getItem("currentUser"));
 
-  const name =
-    user?.ad_soyad ||
-    user?.name ||
-    user?.username ||
-    "Kullanıcı";
+  if (!user) return;
 
-  const helloEl = document.getElementById("helloTitle");
+  const fullName = `${user.ad || ""} ${user.soyad || ""}`.trim() || "Kullanıcı";
+
+  const helloTitle = document.getElementById("helloTitle");
   const topUserName = document.getElementById("topUserName");
   const topUserRole = document.getElementById("topUserRole");
-  const avatar = document.getElementById("userAvatar");
+  const userAvatar = document.getElementById("userAvatar");
 
-  if (helloEl) {
-    helloEl.textContent = `Merhaba, ${name}`;
+  if (helloTitle) {
+    helloTitle.textContent = `Merhaba, ${fullName}`;
   }
 
   if (topUserName) {
-    topUserName.textContent = name;
+    topUserName.textContent = fullName;
   }
 
-  if (topUserRole && user) {
+  if (topUserRole) {
     topUserRole.textContent = user.rol_adi || "Rol";
   }
 
-  if (avatar && name) {
-    avatar.textContent = name.charAt(0).toUpperCase();
+  if (userAvatar) {
+    userAvatar.textContent = fullName.charAt(0).toUpperCase();
   }
-});
+}
+
+document.addEventListener("DOMContentLoaded", setLoggedUserName);
 
 window.addEventListener("DOMContentLoaded", initDashboardPage);
