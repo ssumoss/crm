@@ -1166,71 +1166,45 @@ body.light-mode .filter-group input[type="date"] {
   font-size: 13px;
   border-radius: 10px;
 }
-/* FİLTRE PANELİ: ince kırmızı scroll, oksuz */
+/* Scroll container fix */
 .filter-panel {
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  gap: 10px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  padding-bottom: 4px !important;
-
-  scrollbar-width: thin !important;
-  scrollbar-color: #ff2525 transparent !important;
 }
 
-/* Chrome / Edge / Safari */
+/* Chrome / Edge */
 .filter-panel::-webkit-scrollbar {
-  height: 4px !important;
+  height: 3px !important; /* ultra ince */
 }
 
+/* track */
 .filter-panel::-webkit-scrollbar-track {
   background: transparent !important;
+  margin: 0 !important;
 }
 
+/* thumb */
 .filter-panel::-webkit-scrollbar-thumb {
   background: #ff2525 !important;
   border-radius: 999px !important;
 }
 
-.filter-panel::-webkit-scrollbar-thumb:hover {
-  background: #d9141c !important;
-}
-
-/* Scroll kenar oklarını gizle */
+/* 🔥 OKLARI TAMEN YOK ET */
 .filter-panel::-webkit-scrollbar-button {
+  width: 0px !important;
+  height: 0px !important;
+  display: none !important;
+}
+
+/* ekstra garanti */
+.filter-panel::-webkit-scrollbar-button:single-button {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
 }
 
-.filter-panel::-webkit-scrollbar-button:start,
-.filter-panel::-webkit-scrollbar-button:end {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-/* Filtre kutuları küçük kalsın */
-.filter-group {
-  min-width: 135px !important;
-  flex: 0 0 135px !important;
-}
-
-.filter-group input,
-.filter-group select {
-  height: 36px !important;
-  font-size: 13px !important;
-}
-
-.filter-buttons {
-  flex: 0 0 auto !important;
-  display: flex !important;
-  gap: 10px !important;
-}
-
-.filter-buttons button {
-  height: 36px !important;
-  font-size: 13px !important;
-  padding: 0 12px !important;
+/* Firefox */
+.filter-panel {
+  scrollbar-width: thin !important;
+  scrollbar-color: #ff2525 transparent !important;
 }
