@@ -1166,38 +1166,71 @@ body.light-mode .filter-group input[type="date"] {
   font-size: 13px;
   border-radius: 10px;
 }
-/* Scroll alanı */
+/* FİLTRE PANELİ: ince kırmızı scroll, oksuz */
 .filter-panel {
-  overflow-x: auto;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding-bottom: 4px !important;
+
+  scrollbar-width: thin !important;
+  scrollbar-color: #ff2525 transparent !important;
 }
 
-/* Chrome, Edge, Safari */
+/* Chrome / Edge / Safari */
 .filter-panel::-webkit-scrollbar {
-  height: 4px; /* incelt */
+  height: 4px !important;
 }
 
 .filter-panel::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
 }
 
 .filter-panel::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, #ff2525, #d9141c);
-  border-radius: 10px;
+  background: #ff2525 !important;
+  border-radius: 999px !important;
 }
 
-/* hover efekti */
 .filter-panel::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(90deg, #ff3b3b, #ff2525);
+  background: #d9141c !important;
 }
 
-/* Firefox */
-.filter-panel {
-  scrollbar-color: #ff2525 transparent;
-  scrollbar-width: thin;
-}
-/* Scroll barı tamamen sade yap */
+/* Scroll kenar oklarını gizle */
 .filter-panel::-webkit-scrollbar-button {
-  display: none; /* okları kaldırır */
-  width: 0;
-  height: 0;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.filter-panel::-webkit-scrollbar-button:start,
+.filter-panel::-webkit-scrollbar-button:end {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Filtre kutuları küçük kalsın */
+.filter-group {
+  min-width: 135px !important;
+  flex: 0 0 135px !important;
+}
+
+.filter-group input,
+.filter-group select {
+  height: 36px !important;
+  font-size: 13px !important;
+}
+
+.filter-buttons {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  gap: 10px !important;
+}
+
+.filter-buttons button {
+  height: 36px !important;
+  font-size: 13px !important;
+  padding: 0 12px !important;
 }
