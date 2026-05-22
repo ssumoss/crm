@@ -239,7 +239,7 @@ async function loadMonthlySales(year) {
         formatter: value => formatShortCurrency(value)
       }
     },
-    colors: ["#b61010"],
+    colors: ["#b61515"],
     stroke: {
       curve: "smooth",
       width: 4
@@ -302,7 +302,7 @@ function renderSegmentDistribution(segments) {
     },
     labels,
     series: values,
-    colors: ["#b21818", "#e36724", "#6366f1", "#f3b446", "#36b549"],
+    colors: ["#c61e1e", "#e36724", "#6366f1", "#f3b446", "#36b549"],
     stroke: {
       colors: ["transparent"]
     },
@@ -385,7 +385,7 @@ async function loadCitySalesByYear(year) {
         data: values
       }
     ],
-    colors: ["#31b395"],
+    colors: ["#31b33e"],
     xaxis: {
       categories: labels,
       labels: {
