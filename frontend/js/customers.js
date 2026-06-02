@@ -21,6 +21,7 @@ const selectAll = document.getElementById("selectAll");
 const exportBtn = document.getElementById("exportBtn");
 const campaignBtn = document.getElementById("campaignBtn");
 const pagination = document.getElementById("pagination");
+const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 
 const totalCustomerCard = document.getElementById("totalCustomerCard");
 const highRiskCard = document.getElementById("highRiskCard");
@@ -29,7 +30,6 @@ const championCard = document.getElementById("championCard");
 
 let customers = [];
 let filteredCustomers = [];
-
 let currentPage = 1;
 const pageLimit = 50;
 let totalPages = 1;
@@ -90,12 +90,12 @@ function getCurrentFilters() {
     segment: segmentFilter.value || "all",
     city: cityFilter.value || "all",
     risk: riskFilter.value || "all",
-    min_ltv: Number(minLtvFilter?.value || 0),
-    max_ltv: Number(maxLtvFilter?.value || 0),
-    min_spending: Number(minSpendingFilter?.value || 0),
-    max_spending: Number(maxSpendingFilter?.value || 0),
-    start_date: startDateFilter?.value || "",
-    end_date: endDateFilter?.value || ""
+    min_ltv: Number(minLtvFilter.value || 0),
+    max_ltv: Number(maxLtvFilter.value || 0),
+    min_spending: Number(minSpendingFilter.value || 0),
+    max_spending: Number(maxSpendingFilter.value || 0),
+    start_date: startDateFilter.value || "",
+    end_date: endDateFilter.value || ""
   };
 }
 
@@ -152,14 +152,10 @@ async function loadCustomers(page = 1) {
       </tr>
     `;
 
-    if (selectAll) {
-      selectAll.checked = false;
-    }
+    if (selectAll) selectAll.checked = false;
 
     const query = buildCustomerQuery(currentPage, pageLimit);
     const data = await apiRequest(`/customers/?${query}`);
-
-    if (!data) return;
 
     totalPages = Number(data.toplam_sayfa || 1);
     totalCustomerCount = Number(data.kayit_sayisi || 0);
@@ -201,18 +197,10 @@ async function loadCustomers(page = 1) {
 }
 
 function updateSummaryCards(summary) {
-  if (!summary) {
-    totalCustomerCard.textContent = "0";
-    highRiskCard.textContent = "0";
-    avgLtvCard.textContent = "₺0";
-    championCard.textContent = "0";
-    return;
-  }
-
-  totalCustomerCard.textContent = formatNumber(summary.toplam_musteri || 0);
-  highRiskCard.textContent = formatNumber(summary.yuksek_riskli || 0);
-  avgLtvCard.textContent = formatMoney(summary.ortalama_ltv || 0);
-  championCard.textContent = formatNumber(summary.sampiyon_musteri || 0);
+  totalCustomerCard.textContent = formatNumber(summary?.toplam_musteri || 0);
+  highRiskCard.textContent = formatNumber(summary?.yuksek_riskli || 0);
+  avgLtvCard.textContent = formatMoney(summary?.ortalama_ltv || 0);
+  championCard.textContent = formatNumber(summary?.sampiyon_musteri || 0);
 }
 
 function renderTable(data) {
@@ -261,7 +249,6 @@ function renderTable(data) {
       </td>
 
       <td><strong>${customer.rfm}</strong></td>
-
       <td>${formatMoney(customer.ltv)}</td>
 
       <td>
@@ -271,7 +258,6 @@ function renderTable(data) {
       </td>
 
       <td>${formatMoney(customer.spending)}</td>
-
       <td>${customer.lastOrder}</td>
 
       <td>
@@ -351,6 +337,28 @@ function renderPagination() {
 }
 
 function applyFilters() {
+  loadCustomers(1);
+}
+
+function clearFilters() {
+  searchInput.value = "";
+
+  segmentFilter.value = "all";
+  cityFilter.value = "all";
+  riskFilter.value = "all";
+
+  minLtvFilter.value = "";
+  maxLtvFilter.value = "";
+  minSpendingFilter.value = "";
+  maxSpendingFilter.value = "";
+
+  startDateFilter.value = "";
+  endDateFilter.value = "";
+
+  if (selectAll) selectAll.checked = false;
+  selectedInfo.textContent = "0 müşteri seçildi";
+
+  currentPage = 1;
   loadCustomers(1);
 }
 
@@ -481,30 +489,9 @@ campaignBtn.addEventListener("click", () => {
   alert(`${selected.length} müşteri için kampanya seçimi hazırlandı.`);
 });
 
+clearFiltersBtn.addEventListener("click", clearFilters);
+
 window.addEventListener("DOMContentLoaded", async () => {
-  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
-
-if (clearFiltersBtn) {
-  clearFiltersBtn.addEventListener("click", () => {
-    document.querySelectorAll(".filter-input, .filter-select").forEach(el => {
-      el.value = "";
-    });
-
-    currentPage = 1;
-    loadCustomers(1);
-  });
-}
   await loadFilterOptions();
-  loadCustomers(1);
-});
-
-document.getElementById("clearFiltersBtn").addEventListener("click", () => {
-  document.getElementById("searchInput").value = "";
-  document.getElementById("cityFilter").value = "";
-  document.getElementById("genderFilter").value = "";
-  document.getElementById("segmentFilter").value = "";
-  document.getElementById("minSpendFilter").value = "";
-  document.getElementById("maxSpendFilter").value = "";
-
   loadCustomers(1);
 });
