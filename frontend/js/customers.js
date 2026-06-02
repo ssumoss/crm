@@ -482,6 +482,18 @@ campaignBtn.addEventListener("click", () => {
 });
 
 window.addEventListener("DOMContentLoaded", async () => {
+  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+
+if (clearFiltersBtn) {
+  clearFiltersBtn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-input, .filter-select").forEach(el => {
+      el.value = "";
+    });
+
+    currentPage = 1;
+    loadCustomers(1);
+  });
+}
   await loadFilterOptions();
   loadCustomers(1);
 });
