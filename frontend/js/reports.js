@@ -462,7 +462,7 @@ function setupReportEvents() {
   [startDate, endDate, segmentFilter, cityFilter, pointFilter].forEach(input => {
     if (input) {
       input.addEventListener("change", () => {
-        resetLoadedData();
+        
       });
     }
   });
@@ -488,10 +488,12 @@ function setupReportEvents() {
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   setupReportEvents();
 
   renderRecentReports();
   renderLogs();
   renderKpis();
+
+  await fetchExportData();
 });
