@@ -1234,3 +1234,56 @@ body.light-mode #pagination .page-dots {
 .sidebar::after {
   display: none !important;
 }
+
+/* =========================
+   EXTRA SEGMENT FILTERS
+========================= */
+.filter-group input {
+  height: 42px;
+  border-radius: 12px;
+  background: var(--card-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0 14px;
+  font-weight: 850;
+  outline: none;
+}
+
+.filter-group input::placeholder {
+  color: var(--muted);
+}
+
+.clear-filter-btn {
+  height: 42px;
+  border: none;
+  border-radius: 12px;
+  padding: 0 14px;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--red), var(--red-2));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.25s ease;
+}
+
+.clear-filter-btn:hover,
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(255,37,37,0.25);
+}
+
+@media (max-width: 900px) {
+  .filter-panel .filter-group,
+  .filter-panel select,
+  .filter-panel input,
+  .filter-panel button {
+    width: 100%;
+  }
+
+  .clear-filter-btn,
+  .export-btn {
+    justify-content: center;
+  }
+}

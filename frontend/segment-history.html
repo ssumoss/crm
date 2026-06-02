@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -306,9 +307,48 @@
           </select>
         </div>
 
-        <button class="export-btn" id="exportBtn">
+        <div class="filter-group">
+          <label>Önceki Segment</label>
+          <select id="oldSegmentFilter">
+            <option value="all">Tümü</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Yeni Segment</label>
+          <select id="newSegmentFilter">
+            <option value="all">Tümü</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Min RFM</label>
+          <input id="minRfmFilter" type="number" min="0" placeholder="Örn: 111" />
+        </div>
+
+        <div class="filter-group">
+          <label>Max RFM</label>
+          <input id="maxRfmFilter" type="number" min="0" placeholder="Örn: 555" />
+        </div>
+
+        <div class="filter-group">
+          <label>Başlangıç Tarihi</label>
+          <input id="startDateFilter" type="date" />
+        </div>
+
+        <div class="filter-group">
+          <label>Bitiş Tarihi</label>
+          <input id="endDateFilter" type="date" />
+        </div>
+
+        <button class="export-btn" id="exportBtn" type="button">
           <i class="fa-solid fa-file-export"></i>
           Segment Export
+        </button>
+
+        <button class="clear-filter-btn" id="clearSegmentFiltersBtn" type="button">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+          Filtreleri Temizle
         </button>
       </section>
 
@@ -370,13 +410,14 @@
                 <th>Geçiş Türü</th>
                 <th>Yıl</th>
                 <th>Tarih</th>
+                <th>RFM</th>
                 <th>Açıklama</th>
               </tr>
             </thead>
 
             <tbody id="historyTableBody">
               <tr>
-                <td colspan="7">Segment geçmişi yükleniyor...</td>
+                <td colspan="8">Segment geçmişi yükleniyor...</td>
               </tr>
             </tbody>
           </table>

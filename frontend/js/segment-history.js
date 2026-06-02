@@ -1,6 +1,13 @@
 const segmentSearch = document.getElementById("segmentSearch");
 const transitionFilter = document.getElementById("transitionFilter");
 const yearFilter = document.getElementById("yearFilter");
+const oldSegmentFilter = document.getElementById("oldSegmentFilter");
+const newSegmentFilter = document.getElementById("newSegmentFilter");
+const minRfmFilter = document.getElementById("minRfmFilter");
+const maxRfmFilter = document.getElementById("maxRfmFilter");
+const startDateFilter = document.getElementById("startDateFilter");
+const endDateFilter = document.getElementById("endDateFilter");
+const clearSegmentFiltersBtn = document.getElementById("clearSegmentFiltersBtn");
 const exportBtn = document.getElementById("exportBtn");
 
 const totalHistory = document.getElementById("totalHistory");
@@ -20,11 +27,9 @@ const pagination = document.getElementById("pagination");
 let rawSegmentRows = [];
 let historyData = [];
 let filteredHistory = [];
-
 let currentPage = 1;
 const pageLimit = 50;
 let totalPages = 1;
-
 let searchTimer = null;
 
 const segmentRank = {
@@ -45,6 +50,12 @@ function normalizeSegmentName(value) {
   return value || "-";
 }
 
+function normalizeSearch(value) {
+  return String(value || "")
+    .toLocaleLowerCase("tr-TR")
+    .replaceAll("ı", "i");
+}
+
 function getRank(segment) {
   return segmentRank[segment] || 0;
 }
@@ -56,7 +67,6 @@ function getTransitionType(oldSegment, newSegment) {
   if (oldSegment === newSegment) return "Sabit";
   if (newRank > oldRank) return "Yükseldi";
   if (newRank < oldRank) return "Düştü";
-
   return "Sabit";
 }
 
@@ -84,27 +94,41 @@ function formatNumber(value) {
 
 function formatDate(value) {
   if (!value) return "-";
-
   const date = new Date(value);
-
   if (isNaN(date.getTime())) return String(value);
-
   return date.toLocaleDateString("tr-TR");
 }
 
+function getDateForCompare(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+}
+
 async function loadSegmentHistory() {
-  const raw = await apiRequest("/analytics/segment-history/");
+  try {
+    const raw = await apiRequest("/analytics/segment-history/");
+    if (!raw) return;
 
-  if (!raw) return;
+    const rows = Array.isArray(raw) ? raw : raw.veriler || [];
+    rawSegmentRows = rows;
+    historyData = buildTransitionRows(rows);
+    filteredHistory = [...historyData];
 
-  const rows = Array.isArray(raw) ? raw : raw.veriler || [];
-
-  rawSegmentRows = rows;
-  historyData = buildTransitionRows(rows);
-  filteredHistory = [...historyData];
-
-  currentPage = 1;
-  renderAll(filteredHistory);
+    fillSegmentFilters(historyData);
+    currentPage = 1;
+    renderAll(filteredHistory);
+  } catch (error) {
+    console.error("Segment geçmişi yükleme hatası:", error);
+    if (historyTableBody) {
+      historyTableBody.innerHTML = `
+        <tr>
+          <td colspan="8">Segment geçmişi yüklenirken hata oluştu.</td>
+        </tr>
+      `;
+    }
+  }
 }
 
 function buildTransitionRows(rows) {
@@ -112,7 +136,6 @@ function buildTransitionRows(rows) {
 
   rows.forEach(row => {
     const musteriId = row.musteri_id;
-
     if (!grouped[musteriId]) grouped[musteriId] = [];
 
     grouped[musteriId].push({
@@ -121,8 +144,9 @@ function buildTransitionRows(rows) {
       customer: row.musteri_ad_soyad || row.musteri || "-",
       year: Number(row.yil),
       segment: normalizeSegmentName(row.segment_adi || row.segment),
-      rfm: row.toplam_rfm_skoru || "-",
-      date: row.hesaplama_tarihi || null
+      rfm: Number(row.toplam_rfm_skoru || 0),
+      dateRaw: row.hesaplama_tarihi || null,
+      date: row.hesaplama_tarihi ? formatDate(row.hesaplama_tarihi) : null
     });
   });
 
@@ -134,19 +158,20 @@ function buildTransitionRows(rows) {
     for (let i = 1; i < sorted.length; i++) {
       const previous = sorted[i - 1];
       const current = sorted[i];
-
       const oldSegment = previous.segment;
       const newSegment = current.segment;
       const type = getTransitionType(oldSegment, newSegment);
 
       transitions.push({
         id: current.id,
+        musteri_id: current.musteri_id,
         customer: current.customer,
         oldSegment,
         newSegment,
         type,
         year: current.year,
-        date: current.date ? formatDate(current.date) : `${current.year}`,
+        date: current.date || `${current.year}`,
+        dateRaw: current.dateRaw,
         desc:
           type === "Sabit"
             ? `${previous.year} yılından ${current.year} yılına segmenti sabit kaldı.`
@@ -159,10 +184,33 @@ function buildTransitionRows(rows) {
   return transitions;
 }
 
+function fillSegmentFilters(data) {
+  const oldCurrent = oldSegmentFilter ? oldSegmentFilter.value : "all";
+  const newCurrent = newSegmentFilter ? newSegmentFilter.value : "all";
+
+  const oldSegments = [...new Set(data.map(item => item.oldSegment).filter(Boolean))].sort((a, b) => a.localeCompare(b, "tr"));
+  const newSegments = [...new Set(data.map(item => item.newSegment).filter(Boolean))].sort((a, b) => a.localeCompare(b, "tr"));
+
+  if (oldSegmentFilter) {
+    oldSegmentFilter.innerHTML = `<option value="all">Tümü</option>`;
+    oldSegments.forEach(segment => {
+      oldSegmentFilter.innerHTML += `<option value="${segment}">${segment}</option>`;
+    });
+    oldSegmentFilter.value = oldSegments.includes(oldCurrent) ? oldCurrent : "all";
+  }
+
+  if (newSegmentFilter) {
+    newSegmentFilter.innerHTML = `<option value="all">Tümü</option>`;
+    newSegments.forEach(segment => {
+      newSegmentFilter.innerHTML += `<option value="${segment}">${segment}</option>`;
+    });
+    newSegmentFilter.value = newSegments.includes(newCurrent) ? newCurrent : "all";
+  }
+}
+
 function renderKpis(data) {
   const up = data.filter(item => item.type === "Yükseldi").length;
   const down = data.filter(item => item.type === "Düştü").length;
-
   const transitionCounts = countTransitions(data);
   const top = Object.entries(transitionCounts).sort((a, b) => b[1] - a[1])[0];
 
@@ -170,24 +218,14 @@ function renderKpis(data) {
   if (upCustomerCount) upCustomerCount.textContent = formatNumber(up);
   if (downCustomerCount) downCustomerCount.textContent = formatNumber(down);
   if (topTransition) topTransition.textContent = top ? top[0] : "-";
-
-  if (topTransitionCount) {
-    topTransitionCount.textContent = top
-      ? `${formatNumber(top[1])} müşteri`
-      : "0 müşteri";
-  }
+  if (topTransitionCount) topTransitionCount.textContent = top ? `${formatNumber(top[1])} müşteri` : "0 müşteri";
 }
 
 function renderSankey(data) {
   if (!sankeyBox) return;
 
   sankeyBox.innerHTML = "";
-
-  const transitionCounts = countTransitions(data);
-
-  const entries = Object.entries(transitionCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10);
+  const entries = Object.entries(countTransitions(data)).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
   if (!entries.length) {
     sankeyBox.innerHTML = `<p>Segment geçiş verisi bulunamadı.</p>`;
@@ -204,9 +242,7 @@ function renderSankey(data) {
     sankeyBox.innerHTML += `
       <div class="sankey-row ${isSame ? "same-transition" : ""}">
         <div class="sankey-node">${oldSegment}</div>
-        <div class="sankey-line">
-          <b style="--w:${width}%"></b>
-        </div>
+        <div class="sankey-line"><b style="--w:${width}%"></b></div>
         <div class="sankey-node">${newSegment}</div>
         <strong>${formatNumber(count)}</strong>
       </div>
@@ -274,46 +310,19 @@ function renderUpDownLists(data) {
   });
 }
 
-function getFilteredRawRows() {
-  const searchValue = segmentSearch
-    ? segmentSearch.value.toLocaleLowerCase("tr-TR").trim()
-    : "";
-
-  const yearValue = yearFilter ? yearFilter.value : "all";
-
-  return rawSegmentRows.filter(row => {
-    const customer = String(row.musteri_ad_soyad || row.musteri || "").toLocaleLowerCase("tr-TR");
-    const segment = String(row.segment_adi || row.segment || "").toLocaleLowerCase("tr-TR");
-
-    const searchMatch =
-      customer.includes(searchValue) ||
-      segment.includes(searchValue) ||
-      String(row.musteri_id || "").includes(searchValue);
-
-    const yearMatch =
-      yearValue === "all" || String(row.yil) === yearValue;
-
-    return searchMatch && yearMatch;
-  });
-}
-
 function renderYearCompare() {
   if (!yearCompareBox) return;
 
-  const filteredRawRows = getFilteredRawRows();
   const yearMap = {};
 
-  filteredRawRows.forEach(row => {
-    const year = Number(row.yil);
-    const segment = row.segment_adi || row.segment || "-";
-
+  filteredHistory.forEach(item => {
+    const year = Number(item.year);
+    const segment = item.newSegment || "-";
     if (!yearMap[year]) yearMap[year] = {};
-
     yearMap[year][segment] = (yearMap[year][segment] || 0) + 1;
   });
 
   const years = Object.keys(yearMap).sort();
-
   yearCompareBox.innerHTML = "";
 
   if (!years.length) {
@@ -322,20 +331,13 @@ function renderYearCompare() {
   }
 
   years.forEach(year => {
-    const segmentEntries = Object.entries(yearMap[year])
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6);
-
+    const segmentEntries = Object.entries(yearMap[year]).sort((a, b) => b[1] - a[1]).slice(0, 6);
     const max = Math.max(...segmentEntries.map(item => item[1]), 1);
 
-    let html = `
-      <div class="year-compare-card">
-        <h4>${year}</h4>
-    `;
+    let html = `<div class="year-compare-card"><h4>${year}</h4>`;
 
     segmentEntries.forEach(([segment, count]) => {
       const width = Math.max(Math.round((count / max) * 100), 6);
-
       html += `
         <div class="year-segment-row">
           <span>${segment}</span>
@@ -356,11 +358,7 @@ function renderTable(data) {
   historyTableBody.innerHTML = "";
 
   if (!data.length) {
-    historyTableBody.innerHTML = `
-      <tr>
-        <td colspan="7">Kayıt bulunamadı.</td>
-      </tr>
-    `;
+    historyTableBody.innerHTML = `<tr><td colspan="8">Kayıt bulunamadı.</td></tr>`;
     historyCountText.textContent = "0 kayıt listeleniyor";
     return;
   }
@@ -378,6 +376,7 @@ function renderTable(data) {
         <td><span class="badge ${getBadgeClass(item.type)}">${item.type}</span></td>
         <td>${item.year}</td>
         <td>${item.date}</td>
+        <td>${item.rfm || "-"}</td>
         <td>${item.desc}</td>
       </tr>
     `;
@@ -391,7 +390,6 @@ function renderPagination() {
   if (!pagination) return;
 
   pagination.innerHTML = "";
-
   totalPages = Math.ceil(filteredHistory.length / pageLimit);
 
   if (totalPages <= 1) return;
@@ -412,13 +410,8 @@ function renderPagination() {
     return btn;
   }
 
-  pagination.appendChild(
-    createPageButton("‹", currentPage - 1, false, currentPage === 1)
-  );
-
-  pagination.appendChild(
-    createPageButton("1", 1, currentPage === 1)
-  );
+  pagination.appendChild(createPageButton("‹", currentPage - 1, false, currentPage === 1));
+  pagination.appendChild(createPageButton("1", 1, currentPage === 1));
 
   if (currentPage > 4) {
     const dots = document.createElement("span");
@@ -431,9 +424,7 @@ function renderPagination() {
   const endPage = Math.min(totalPages - 1, currentPage + 1);
 
   for (let i = startPage; i <= endPage; i++) {
-    pagination.appendChild(
-      createPageButton(String(i), i, i === currentPage)
-    );
+    pagination.appendChild(createPageButton(String(i), i, i === currentPage));
   }
 
   if (currentPage < totalPages - 3) {
@@ -444,14 +435,10 @@ function renderPagination() {
   }
 
   if (totalPages > 1) {
-    pagination.appendChild(
-      createPageButton(String(totalPages), totalPages, currentPage === totalPages)
-    );
+    pagination.appendChild(createPageButton(String(totalPages), totalPages, currentPage === totalPages));
   }
 
-  pagination.appendChild(
-    createPageButton("›", currentPage + 1, false, currentPage === totalPages)
-  );
+  pagination.appendChild(createPageButton("›", currentPage + 1, false, currentPage === totalPages));
 }
 
 function renderAll(data) {
@@ -466,40 +453,81 @@ function renderAll(data) {
 function applyFilters() {
   currentPage = 1;
 
-  const searchValue = segmentSearch
-    ? segmentSearch.value.toLocaleLowerCase("tr-TR").trim()
-    : "";
-
+  const searchValue = normalizeSearch(segmentSearch ? segmentSearch.value.trim() : "");
   const transitionValue = transitionFilter ? transitionFilter.value : "all";
   const yearValue = yearFilter ? yearFilter.value : "all";
+  const oldSegmentValue = oldSegmentFilter ? oldSegmentFilter.value : "all";
+  const newSegmentValue = newSegmentFilter ? newSegmentFilter.value : "all";
+  const minRfmValue = Number(minRfmFilter?.value || 0);
+  const maxRfmValue = Number(maxRfmFilter?.value || 0);
+  const startDateValue = startDateFilter ? startDateFilter.value : "";
+  const endDateValue = endDateFilter ? endDateFilter.value : "";
 
   filteredHistory = historyData.filter(item => {
-    const customer = item.customer.toLocaleLowerCase("tr-TR");
-    const oldSegment = item.oldSegment.toLocaleLowerCase("tr-TR");
-    const newSegment = item.newSegment.toLocaleLowerCase("tr-TR");
+    const customer = normalizeSearch(item.customer);
+    const oldSegment = normalizeSearch(item.oldSegment);
+    const newSegment = normalizeSearch(item.newSegment);
+    const rfm = Number(item.rfm || 0);
+    const itemDate = getDateForCompare(item.dateRaw);
 
     const searchMatch =
+      !searchValue ||
       customer.includes(searchValue) ||
       oldSegment.includes(searchValue) ||
-      newSegment.includes(searchValue);
+      newSegment.includes(searchValue) ||
+      String(item.musteri_id || "").includes(searchValue);
 
-    const transitionMatch =
-      transitionValue === "all" || item.type === transitionValue;
+    const transitionMatch = transitionValue === "all" || item.type === transitionValue;
+    const yearMatch = yearValue === "all" || String(item.year) === yearValue;
+    const oldSegmentMatch = oldSegmentValue === "all" || item.oldSegment === oldSegmentValue;
+    const newSegmentMatch = newSegmentValue === "all" || item.newSegment === newSegmentValue;
+    const minRfmMatch = minRfmValue <= 0 || rfm >= minRfmValue;
+    const maxRfmMatch = maxRfmValue <= 0 || rfm <= maxRfmValue;
+    const startDateMatch = !startDateValue || (itemDate && itemDate >= startDateValue);
+    const endDateMatch = !endDateValue || (itemDate && itemDate <= endDateValue);
 
-    const yearMatch =
-      yearValue === "all" || String(item.year) === yearValue;
-
-    return searchMatch && transitionMatch && yearMatch;
+    return (
+      searchMatch &&
+      transitionMatch &&
+      yearMatch &&
+      oldSegmentMatch &&
+      newSegmentMatch &&
+      minRfmMatch &&
+      maxRfmMatch &&
+      startDateMatch &&
+      endDateMatch
+    );
   });
 
   renderAll(filteredHistory);
 }
 
+function clearFilters() {
+  if (segmentSearch) segmentSearch.value = "";
+  if (transitionFilter) transitionFilter.value = "all";
+  if (yearFilter) yearFilter.value = "all";
+  if (oldSegmentFilter) oldSegmentFilter.value = "all";
+  if (newSegmentFilter) newSegmentFilter.value = "all";
+  if (minRfmFilter) minRfmFilter.value = "";
+  if (maxRfmFilter) maxRfmFilter.value = "";
+  if (startDateFilter) startDateFilter.value = "";
+  if (endDateFilter) endDateFilter.value = "";
+
+  currentPage = 1;
+  filteredHistory = [...historyData];
+  renderAll(filteredHistory);
+}
+
 function exportSegmentHistory() {
-  let csv = "\uFEFFMüşteri,Önceki Segment,Yeni Segment,Geçiş Türü,Yıl,Tarih,Açıklama\n";
+  if (!filteredHistory.length) {
+    alert("Dışa aktarılacak segment geçmişi bulunamadı.");
+    return;
+  }
+
+  let csv = "\uFEFFMüşteri,Önceki Segment,Yeni Segment,Geçiş Türü,Yıl,Tarih,RFM,Açıklama\n";
 
   filteredHistory.forEach(item => {
-    csv += `"${item.customer}","${item.oldSegment}","${item.newSegment}","${item.type}","${item.year}","${item.date}","${item.desc}"\n`;
+    csv += `"${item.customer}","${item.oldSegment}","${item.newSegment}","${item.type}","${item.year}","${item.date}","${item.rfm || "-"}","${item.desc}"\n`;
   });
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -507,29 +535,12 @@ function exportSegmentHistory() {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "segment_gecmisi.csv";
+  link.download = "filtreli_segment_gecmisi.csv";
   link.click();
-
   URL.revokeObjectURL(url);
 }
 
-function ensureSameFilterOption() {
-  if (!transitionFilter) return;
-
-  const hasSameOption = Array.from(transitionFilter.options)
-    .some(option => option.value === "Sabit");
-
-  if (!hasSameOption) {
-    const option = document.createElement("option");
-    option.value = "Sabit";
-    option.textContent = "Sabit";
-    transitionFilter.appendChild(option);
-  }
-}
-
 function setupEvents() {
-  ensureSameFilterOption();
-
   if (segmentSearch) {
     segmentSearch.addEventListener("input", () => {
       clearTimeout(searchTimer);
@@ -537,12 +548,30 @@ function setupEvents() {
     });
   }
 
-  if (transitionFilter) {
-    transitionFilter.addEventListener("change", applyFilters);
-  }
+  [
+    transitionFilter,
+    yearFilter,
+    oldSegmentFilter,
+    newSegmentFilter,
+    startDateFilter,
+    endDateFilter
+  ].forEach(element => {
+    if (element) element.addEventListener("change", applyFilters);
+  });
 
-  if (yearFilter) {
-    yearFilter.addEventListener("change", applyFilters);
+  [minRfmFilter, maxRfmFilter].forEach(element => {
+    if (!element) return;
+
+    element.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilters, 400);
+    });
+
+    element.addEventListener("change", applyFilters);
+  });
+
+  if (clearSegmentFiltersBtn) {
+    clearSegmentFiltersBtn.addEventListener("click", clearFilters);
   }
 
   if (exportBtn) {
@@ -556,7 +585,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (historyTableBody) {
     historyTableBody.innerHTML = `
       <tr>
-        <td colspan="7">Segment geçmişi yükleniyor...</td>
+        <td colspan="8">Segment geçmişi yükleniyor...</td>
       </tr>
     `;
   }
