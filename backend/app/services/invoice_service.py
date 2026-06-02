@@ -1,25 +1,17 @@
 from sqlalchemy import text
 
 
-def get_all_invoices_service(
-    db,
-    page: int = 1,
-    limit: int = 50,
-    search: str | None = None,
-    belge_tipi: str | None = None,
-    satis_noktasi: str | None = None,
-    start_date: str | None = None,
-    end_date: str | None = None,
-    min_tutar: float | None = None,
-    max_tutar: float | None = None
+def build_invoice_filters(
+    search=None,
+    belge_tipi=None,
+    satis_noktasi=None,
+    start_date=None,
+    end_date=None,
+    min_tutar=None,
+    max_tutar=None
 ):
-    offset = (page - 1) * limit
-
     where = ["1=1"]
-    params = {
-        "limit": limit,
-        "offset": offset
-    }
+    params = {}
 
     if search:
         where.append("""
@@ -56,7 +48,35 @@ def get_all_invoices_service(
         where.append("f.fatura_tutari <= :max_tutar")
         params["max_tutar"] = max_tutar
 
-    where_sql = " AND ".join(where)
+    return " AND ".join(where), params
+
+
+def get_all_invoices_service(
+    db,
+    page: int = 1,
+    limit: int = 50,
+    search: str | None = None,
+    belge_tipi: str | None = None,
+    satis_noktasi: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    min_tutar: float | None = None,
+    max_tutar: float | None = None
+):
+    offset = (page - 1) * limit
+
+    where_sql, params = build_invoice_filters(
+        search=search,
+        belge_tipi=belge_tipi,
+        satis_noktasi=satis_noktasi,
+        start_date=start_date,
+        end_date=end_date,
+        min_tutar=min_tutar,
+        max_tutar=max_tutar
+    )
+
+    params["limit"] = limit
+    params["offset"] = offset
 
     total_count = db.execute(text(f"""
         SELECT COUNT(DISTINCT f.fatura_no)
@@ -114,6 +134,77 @@ def get_all_invoices_service(
         "page": int(page),
         "limit": int(limit),
         "offset": int(offset),
+        "veriler": [
+            {
+                "fatura_no": row[0],
+                "musteri": row[1].strip() if row[1] and row[1].strip() else "-",
+                "tutar": float(row[2] or 0),
+                "tarih": str(row[3]) if row[3] else "-",
+                "belge_tipi": row[4] or "-",
+                "satis_noktasi": row[5] or "-",
+                "kalem_sayisi": int(row[6] or 0)
+            }
+            for row in rows
+        ]
+    }
+
+
+def get_all_invoices_export_service(
+    db,
+    search: str | None = None,
+    belge_tipi: str | None = None,
+    satis_noktasi: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    min_tutar: float | None = None,
+    max_tutar: float | None = None
+):
+    where_sql, params = build_invoice_filters(
+        search=search,
+        belge_tipi=belge_tipi,
+        satis_noktasi=satis_noktasi,
+        start_date=start_date,
+        end_date=end_date,
+        min_tutar=min_tutar,
+        max_tutar=max_tutar
+    )
+
+    rows = db.execute(text(f"""
+        SELECT
+            f.fatura_no,
+            CONCAT(
+                COALESCE(m.musteri_adi, ''),
+                ' ',
+                COALESCE(m.musteri_soyadi, '')
+            ) AS musteri,
+            f.fatura_tutari,
+            f.fatura_tarihi,
+            bt.belge_tipi_adi,
+            sn.satis_noktasi_adi,
+            COUNT(sd.siparis_id) AS kalem_sayisi
+        FROM faturalar f
+        LEFT JOIN musteriler m
+            ON f.musteri_id = m.musteri_id
+        LEFT JOIN belge_tipi bt
+            ON f.belge_tipi_id = bt.belge_tipi_id
+        LEFT JOIN satis_noktalari sn
+            ON f.satis_noktasi_id = sn.satis_noktasi_id
+        LEFT JOIN siparis_detaylari sd
+            ON f.fatura_no = sd.fatura_no
+        WHERE {where_sql}
+        GROUP BY
+            f.fatura_no,
+            m.musteri_adi,
+            m.musteri_soyadi,
+            f.fatura_tutari,
+            f.fatura_tarihi,
+            bt.belge_tipi_adi,
+            sn.satis_noktasi_adi
+        ORDER BY f.fatura_tarihi DESC
+    """), params).fetchall()
+
+    return {
+        "toplam_kayit": len(rows),
         "veriler": [
             {
                 "fatura_no": row[0],
