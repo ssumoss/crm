@@ -1549,3 +1549,32 @@ body.light-mode .invoice-filter-actions input {
     width: 100%;
   }
 }
+
+.export-invoices-btn {
+  border: none;
+  background: #1fa463;
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 13px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: 0.25s ease;
+}
+
+.export-invoices-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(31,164,99,0.28);
+}
+
+@media (max-width: 900px) {
+  .invoice-filter-actions select,
+  .invoice-filter-actions input,
+  #clearInvoiceFiltersBtn,
+  .export-invoices-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -19,6 +19,7 @@ const endDateFilter = document.getElementById("endDateFilter");
 const minAmountFilter = document.getElementById("minAmountFilter");
 const maxAmountFilter = document.getElementById("maxAmountFilter");
 const clearInvoiceFiltersBtn = document.getElementById("clearInvoiceFiltersBtn");
+const exportInvoicesBtn = document.getElementById("exportInvoicesBtn");
 
 const invoiceTableBody = document.getElementById("invoiceTableBody");
 const invoiceCount = document.getElementById("invoiceCount");
@@ -54,8 +55,11 @@ function formatMoney(value) {
 
 function formatDate(value) {
   if (!value || value === "-") return "-";
+
   const date = new Date(value);
+
   if (isNaN(date.getTime())) return value;
+
   return date.toLocaleDateString("tr-TR");
 }
 
@@ -144,12 +148,14 @@ async function loadInvoiceSummary() {
 async function loadInvoiceTrend(year = 2025) {
   const data = await apiRequest(`/invoices/monthly-trend?year=${year}`);
   if (!data) return;
+
   renderOrderTrendChart(data);
 }
 
 async function loadReturnTrend(year = 2025) {
   const data = await apiRequest(`/invoices/monthly-trend?year=${year}`);
   if (!data) return;
+
   renderReturnTrendChart(data);
 }
 
@@ -162,22 +168,33 @@ function renderOrderTrendChart(data) {
 
   if (orderTrendChart) orderTrendChart.destroy();
 
+  const base = getBaseChartOptions();
+
   const options = {
-    ...getBaseChartOptions(),
+    ...base,
     chart: {
-      ...getBaseChartOptions().chart,
+      ...base.chart,
       type: "area",
       height: 280
     },
-    series: [{ name: "Satış Siparişi", data: salesCounts }],
-    xaxis: { categories: months },
+    series: [
+      {
+        name: "Satış Siparişi",
+        data: salesCounts
+      }
+    ],
+    xaxis: {
+      categories: months
+    },
     yaxis: {
       labels: {
         formatter: value => Math.round(value)
       }
     },
     colors: ["#ff2525"],
-    dataLabels: { enabled: false },
+    dataLabels: {
+      enabled: false
+    },
     stroke: {
       curve: "smooth",
       width: 4
@@ -191,7 +208,9 @@ function renderOrderTrendChart(data) {
     },
     markers: {
       size: 0,
-      hover: { size: 7 }
+      hover: {
+        size: 7
+      }
     },
     tooltip: {
       enabled: true,
@@ -223,17 +242,21 @@ function renderDocTypeChart(summary) {
     return;
   }
 
+  const base = getBaseChartOptions();
+
   const options = {
-    ...getBaseChartOptions(),
+    ...base,
     chart: {
-      ...getBaseChartOptions().chart,
+      ...base.chart,
       type: "donut",
       height: 280
     },
     series: [saleCount, returnCount],
     labels: ["Satış", "İade"],
     colors: ["#2279d6", "#ff2525"],
-    stroke: { colors: ["transparent"] },
+    stroke: {
+      colors: ["transparent"]
+    },
     legend: {
       position: "bottom",
       fontWeight: 800,
@@ -283,15 +306,24 @@ function renderReturnTrendChart(data) {
 
   if (returnTrendChart) returnTrendChart.destroy();
 
+  const base = getBaseChartOptions();
+
   const options = {
-    ...getBaseChartOptions(),
+    ...base,
     chart: {
-      ...getBaseChartOptions().chart,
+      ...base.chart,
       type: "bar",
       height: 280
     },
-    series: [{ name: "İade", data: returnCounts }],
-    xaxis: { categories: months },
+    series: [
+      {
+        name: "İade",
+        data: returnCounts
+      }
+    ],
+    xaxis: {
+      categories: months
+    },
     yaxis: {
       labels: {
         formatter: value => Math.round(value)
@@ -304,7 +336,9 @@ function renderReturnTrendChart(data) {
         columnWidth: "50%"
       }
     },
-    dataLabels: { enabled: false },
+    dataLabels: {
+      enabled: false
+    },
     tooltip: {
       enabled: true,
       custom: function ({ series, seriesIndex, dataPointIndex, w }) {
@@ -322,6 +356,7 @@ function renderReturnTrendChart(data) {
 async function loadBasketAnalysis(year = 2025) {
   const data = await apiRequest(`/invoices/basket-analysis?year=${year}`);
   if (!data) return;
+
   renderBasketAnalysis(data);
 }
 
@@ -350,11 +385,11 @@ function renderBasketAnalysis(data) {
   });
 }
 
-function buildInvoiceQueryParams(page) {
+function buildInvoiceQueryParams(page = 1, limit = pageLimit) {
   const params = new URLSearchParams();
 
   params.append("page", page);
-  params.append("limit", pageLimit);
+  params.append("limit", limit);
 
   if (invoiceSearch && invoiceSearch.value.trim()) {
     params.append("search", invoiceSearch.value.trim());
@@ -399,15 +434,17 @@ async function loadInvoices(page = 1) {
       `;
     }
 
-    const params = buildInvoiceQueryParams(currentPage);
+    const params = buildInvoiceQueryParams(currentPage, pageLimit);
     const data = await apiRequest(`/invoices/?${params.toString()}`);
 
     if (!data || !Array.isArray(data.veriler)) {
-      invoiceTableBody.innerHTML = `
-        <tr>
-          <td colspan="8">Fatura verisi alınamadı.</td>
-        </tr>
-      `;
+      if (invoiceTableBody) {
+        invoiceTableBody.innerHTML = `
+          <tr>
+            <td colspan="8">Fatura verisi alınamadı.</td>
+          </tr>
+        `;
+      }
       return;
     }
 
@@ -492,6 +529,7 @@ function renderPagination() {
 
   function createPageButton(text, page, isActive = false, isDisabled = false) {
     const btn = document.createElement("button");
+
     btn.textContent = text;
     btn.className = isActive ? "page-btn active" : "page-btn";
     btn.disabled = isDisabled;
@@ -583,6 +621,44 @@ function clearInvoiceFilters() {
   if (maxAmountFilter) maxAmountFilter.value = "";
 
   loadInvoices(1);
+}
+
+async function exportInvoices() {
+  try {
+    const params = buildInvoiceQueryParams(1, 100000);
+    const data = await apiRequest(`/invoices/?${params.toString()}`);
+
+    const exportList = data?.veriler || [];
+
+    if (!exportList.length) {
+      alert("İndirilecek fatura bulunamadı.");
+      return;
+    }
+
+    let csvContent =
+      "\uFEFFFatura No,Müşteri,Fatura Tutarı,Tarih,Belge Tipi,Satış Noktası,Kalem Sayısı\n";
+
+    exportList.forEach(invoice => {
+      csvContent += `"${safeText(invoice.fatura_no)}","${safeText(invoice.musteri)}","${Number(invoice.tutar || 0)}","${safeText(invoice.tarih)}","${safeText(invoice.belge_tipi)}","${safeText(invoice.satis_noktasi)}","${safeText(invoice.kalem_sayisi)}"\n`;
+    });
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "filtreli_faturalar.csv";
+    link.click();
+
+    URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error("Fatura export hatası:", error);
+    alert("Faturalar indirilirken hata oluştu.");
+  }
 }
 
 function openModal(faturaNo) {
@@ -677,6 +753,10 @@ function setupEvents() {
 
   if (clearInvoiceFiltersBtn) {
     clearInvoiceFiltersBtn.addEventListener("click", clearInvoiceFilters);
+  }
+
+  if (exportInvoicesBtn) {
+    exportInvoicesBtn.addEventListener("click", exportInvoices);
   }
 
   if (orderTrendYear) {

@@ -17,7 +17,7 @@ router = APIRouter(prefix="/invoices", tags=["Invoices"])
 @router.get("/")
 def get_all_invoices(
     page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=500),
+    limit: int = Query(50, ge=1, le=100000),
     search: str | None = Query(None),
     belge_tipi: str | None = Query(None),
     satis_noktasi: str | None = Query(None),
@@ -48,7 +48,7 @@ def get_all_invoices(
 @router.get("")
 def get_all_invoices_no_slash(
     page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=500),
+    limit: int = Query(50, ge=1, le=100000),
     search: str | None = Query(None),
     belge_tipi: str | None = Query(None),
     satis_noktasi: str | None = Query(None),
