@@ -485,3 +485,14 @@ window.addEventListener("DOMContentLoaded", async () => {
   await loadFilterOptions();
   loadCustomers(1);
 });
+
+document.getElementById("clearFiltersBtn").addEventListener("click", () => {
+  document.getElementById("searchInput").value = "";
+  document.getElementById("cityFilter").value = "";
+  document.getElementById("genderFilter").value = "";
+  document.getElementById("segmentFilter").value = "";
+  document.getElementById("minSpendFilter").value = "";
+  document.getElementById("maxSpendFilter").value = "";
+
+  loadCustomers(1);
+});

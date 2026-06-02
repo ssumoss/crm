@@ -1216,3 +1216,16 @@ body.light-mode .filter-group input[type="date"] {
 .filter-panel::-webkit-scrollbar {
   display: none; /* tamamen kaldırır */
 }
+.clear-filter-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #ef4444;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.clear-filter-btn:hover {
+  background: #dc2626;
+}
