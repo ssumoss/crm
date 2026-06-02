@@ -625,8 +625,37 @@ function clearInvoiceFilters() {
 
 async function exportInvoices() {
   try {
-    const params = buildInvoiceQueryParams(1, 100000);
-    const data = await apiRequest(`/invoices/?${params.toString()}`);
+    const params = new URLSearchParams();
+
+    if (invoiceSearch && invoiceSearch.value.trim()) {
+      params.append("search", invoiceSearch.value.trim());
+    }
+
+    if (docTypeFilter && docTypeFilter.value !== "all") {
+      params.append("belge_tipi", docTypeFilter.value);
+    }
+
+    if (salesPointFilter && salesPointFilter.value !== "all") {
+      params.append("satis_noktasi", salesPointFilter.value);
+    }
+
+    if (startDateFilter && startDateFilter.value) {
+      params.append("start_date", startDateFilter.value);
+    }
+
+    if (endDateFilter && endDateFilter.value) {
+      params.append("end_date", endDateFilter.value);
+    }
+
+    if (minAmountFilter && minAmountFilter.value) {
+      params.append("min_tutar", minAmountFilter.value);
+    }
+
+    if (maxAmountFilter && maxAmountFilter.value) {
+      params.append("max_tutar", maxAmountFilter.value);
+    }
+
+    const data = await apiRequest(`/invoices/export?${params.toString()}`);
 
     const exportList = data?.veriler || [];
 
