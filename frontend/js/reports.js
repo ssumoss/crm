@@ -18,8 +18,12 @@ const fullExportBtn = document.getElementById("fullExportBtn");
 const recentReportsBody = document.getElementById("recentReportsBody");
 const downloadLogList = document.getElementById("downloadLogList");
 
+const applyFiltersBtn = document.getElementById("applyFiltersBtn");
+
 let exportData = [];
 let backendCustomerCount = 0;
+let isDataLoaded = false;
+let isLoading = false;
 
 let recentReports = JSON.parse(localStorage.getItem("recentReports")) || [];
 let downloadLogs = JSON.parse(localStorage.getItem("downloadLogs")) || [];
@@ -38,24 +42,58 @@ function buildExportEndpoint() {
   if (pointFilter && pointFilter.value !== "all") params.append("point", pointFilter.value);
 
   const query = params.toString();
-
   return query ? `/export/full?${query}` : `/export/full`;
 }
 
-async function fetchExportData() {
+function setLoadingState(status) {
+  isLoading = status;
+
+  if (fullExportBtn) {
+    fullExportBtn.disabled = status;
+    fullExportBtn.textContent = status ? "Hazırlanıyor..." : "Tam Veri Export";
+  }
+
+  if (applyFiltersBtn) {
+    applyFiltersBtn.disabled = status;
+    applyFiltersBtn.textContent = status ? "Yükleniyor..." : "Filtrele";
+  }
+}
+
+async function fetchExportData(force = false) {
+  if (isLoading) return;
+
+  if (isDataLoaded && !force) {
+    return;
+  }
+
   try {
+    setLoadingState(true);
+
     const result = await apiRequest(buildExportEndpoint());
 
     exportData = result?.veriler || [];
     backendCustomerCount =
       result?.benzersiz_musteri_sayisi || getUniqueCustomerCount(exportData);
 
+    isDataLoaded = true;
+
     renderDynamicFilters();
     renderKpis();
+
+    return exportData;
   } catch (error) {
     console.error(error);
     alert("Rapor verileri alınamadı. Token, yetki veya backend endpointini kontrol et.");
+  } finally {
+    setLoadingState(false);
   }
+}
+
+function resetLoadedData() {
+  isDataLoaded = false;
+  exportData = [];
+  backendCustomerCount = 0;
+  renderKpis();
 }
 
 function uniqueValues(key) {
@@ -66,7 +104,6 @@ function fillSelect(select, values, defaultText = "Tümü") {
   if (!select) return;
 
   const oldValue = select.value;
-
   select.innerHTML = `<option value="all">${defaultText}</option>`;
 
   values.forEach(value => {
@@ -236,7 +273,9 @@ function getReportRows(reportName) {
   }));
 }
 
-function previewReport(reportName) {
+async function previewReport(reportName) {
+  await fetchExportData();
+
   if (!previewPanel || !previewBox) return;
 
   const rows = getReportRows(reportName);
@@ -334,6 +373,11 @@ function downloadExcel(rows, filename, sheetName = "Rapor") {
     return;
   }
 
+  if (!rows.length) {
+    alert("Excel için indirilecek veri bulunamadı.");
+    return;
+  }
+
   const worksheet = XLSX.utils.json_to_sheet(rows);
 
   const headers = Object.keys(rows[0] || {});
@@ -411,13 +455,21 @@ async function fullExport() {
 }
 
 async function applyFilters() {
-  await fetchExportData();
+  await fetchExportData(true);
 }
 
 function setupReportEvents() {
   [startDate, endDate, segmentFilter, cityFilter, pointFilter].forEach(input => {
-    if (input) input.addEventListener("change", applyFilters);
+    if (input) {
+      input.addEventListener("change", () => {
+        resetLoadedData();
+      });
+    }
   });
+
+  if (applyFiltersBtn) {
+    applyFiltersBtn.addEventListener("click", applyFilters);
+  }
 
   if (formatFilter) {
     formatFilter.addEventListener("change", () => {
@@ -436,11 +488,10 @@ function setupReportEvents() {
   }
 }
 
-window.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("DOMContentLoaded", () => {
   setupReportEvents();
 
   renderRecentReports();
   renderLogs();
-
-  await fetchExportData();
+  renderKpis();
 });

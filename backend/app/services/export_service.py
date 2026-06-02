@@ -137,3 +137,21 @@ def get_full_export_service(
         "benzersiz_musteri_sayisi": unique_customer_count,
         "veriler": data
     }
+
+def get_export_summary_service(db):
+    row = db.execute(text("""
+        SELECT
+            COUNT(*) AS toplam_fatura,
+            COUNT(DISTINCT m.musteri_id) AS toplam_musteri,
+            COALESCE(SUM(f.fatura_tutari), 0) AS toplam_ciro,
+            COALESCE(AVG(f.fatura_tutari), 0) AS ortalama_fatura
+        FROM musteriler m
+        LEFT JOIN faturalar f ON m.musteri_id = f.musteri_id
+    """)).fetchone()
+
+    return {
+        "toplam_fatura": int(row[0] or 0),
+        "toplam_musteri": int(row[1] or 0),
+        "toplam_ciro": float(row[2] or 0),
+        "ortalama_fatura": float(row[3] or 0)
+    }

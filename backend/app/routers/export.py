@@ -30,3 +30,19 @@ def export_full_data(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+from app.services.export_service import (
+    get_full_export_service,
+    get_export_summary_service
+)
+
+
+@router.get("/summary")
+def export_summary(
+    db: Session = Depends(get_db),
+    current_user: Kullanicilar = Depends(permission_required("rapor_export"))
+):
+    try:
+        return get_export_summary_service(db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
