@@ -352,30 +352,32 @@
       </section>
 
       <section class="table-panel">
-        <div class="table-head">
-          <div>
-            <h3>Log Kayıtları</h3>
-            <p id="logCountText">0 kayıt listeleniyor</p>
-          </div>
-        </div>
+  <div class="table-head">
+    <div>
+      <h3>Log Kayıtları</h3>
+      <p id="logCountText">0 kayıt listeleniyor</p>
+    </div>
+  </div>
 
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Tarih</th>
-                <th>Kullanıcı</th>
-                <th>Log Türü</th>
-                <th>İşlem / Mesaj</th>
-                <th>IP Adresi</th>
-                <th>Durum</th>
-              </tr>
-            </thead>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Tarih</th>
+          <th>Kullanıcı</th>
+          <th>Log Türü</th>
+          <th>İşlem / Mesaj</th>
+          <th>IP Adresi</th>
+          <th>Durum</th>
+        </tr>
+      </thead>
 
-            <tbody id="logTableBody"></tbody>
-          </table>
-        </div>
-      </section>
+      <tbody id="logTableBody"></tbody>
+    </table>
+  </div>
+
+  <div id="pagination" class="pagination"></div>
+</section>
 
       <section class="extra-grid">
         <div class="panel">
@@ -385,21 +387,6 @@
           </div>
 
           <div class="insight-list" id="errorList"></div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head">
-            <h3>Denetim Özeti</h3>
-            <span>Audit</span>
-          </div>
-
-          <div class="score-box">
-            <i class="fa-solid fa-shield-halved"></i>
-            <h4>Log & denetim aktif</h4>
-            <p>
-              Kullanıcı girişleri, işlem kayıtları, yetkisiz erişimler ve hata logları sistem güvenliği için izlenir.
-            </p>
-          </div>
         </div>
       </section>
     </main>

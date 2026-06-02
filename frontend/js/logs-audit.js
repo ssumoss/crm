@@ -18,9 +18,14 @@ const errorList = document.getElementById("errorList");
 
 const logTableBody = document.getElementById("logTableBody");
 const logCountText = document.getElementById("logCountText");
+const pagination = document.getElementById("pagination");
 
 let logs = [];
 let filteredLogs = [];
+
+let currentPage = 1;
+const pageLimit = 20;
+let totalPages = 1;
 
 let errorApexChart = null;
 let logTypeApexChart = null;
@@ -118,19 +123,10 @@ function createTooltip(title, value) {
       font-family:Inter, sans-serif;
       min-width:140px;
     ">
-      <div style="
-        font-size:12px;
-        color:${theme.mutedColor};
-        font-weight:800;
-        margin-bottom:5px;
-      ">
+      <div style="font-size:12px;color:${theme.mutedColor};font-weight:800;margin-bottom:5px;">
         ${title}
       </div>
-      <div style="
-        font-size:15px;
-        color:${theme.textColor};
-        font-weight:900;
-      ">
+      <div style="font-size:15px;color:${theme.textColor};font-weight:900;">
         ${value}
       </div>
     </div>
@@ -260,10 +256,12 @@ function renderErrorChart(data) {
 
   errorChart.innerHTML = "";
 
+  const base = getBaseChartOptions();
+
   const options = {
-    ...getBaseChartOptions(),
+    ...base,
     chart: {
-      ...getBaseChartOptions().chart,
+      ...base.chart,
       type: "bar",
       height: 280
     },
@@ -330,10 +328,12 @@ function renderLogTypeChart(data) {
 
   logTypeChart.innerHTML = "";
 
+  const base = getBaseChartOptions();
+
   const options = {
-    ...getBaseChartOptions(),
+    ...base,
     chart: {
-      ...getBaseChartOptions().chart,
+      ...base.chart,
       type: "donut",
       height: 280
     },
@@ -412,10 +412,12 @@ function renderUserActionChart(data) {
 
   userActionChart.innerHTML = "";
 
+  const base = getBaseChartOptions();
+
   const options = {
-    ...getBaseChartOptions(),
+    ...base,
     chart: {
-      ...getBaseChartOptions().chart,
+      ...base.chart,
       type: "bar",
       height: Math.max(300, labels.length * 45)
     },
@@ -558,10 +560,21 @@ function renderTable(data) {
     `;
 
     logCountText.textContent = "0 kayıt listeleniyor";
+    if (pagination) pagination.innerHTML = "";
     return;
   }
 
-  data.forEach(log => {
+  totalPages = Math.ceil(data.length / pageLimit);
+
+  if (currentPage > totalPages) {
+    currentPage = totalPages;
+  }
+
+  const start = (currentPage - 1) * pageLimit;
+  const end = start + pageLimit;
+  const visibleLogs = data.slice(start, end);
+
+  visibleLogs.forEach(log => {
     logTableBody.innerHTML += `
       <tr>
         <td>${formatDate(log.date)}</td>
@@ -569,12 +582,85 @@ function renderTable(data) {
         <td>${safeText(log.type)}</td>
         <td title="${safeText(log.detail)}">${safeText(log.message)}</td>
         <td>${safeText(log.ip)}</td>
-        <td><span class="badge ${getBadgeClass(log.status)}">${safeText(log.status)}</span></td>
+        <td>
+          <span class="badge ${getBadgeClass(log.status)}">
+            ${safeText(log.status)}
+          </span>
+        </td>
       </tr>
     `;
   });
 
-  logCountText.textContent = `${formatNumber(data.length)} kayıt listeleniyor`;
+  logCountText.textContent =
+    `${formatNumber(data.length)} kayıt içinden bu sayfada ${formatNumber(visibleLogs.length)} kayıt listeleniyor`;
+
+  renderPagination();
+}
+
+function renderPagination() {
+  if (!pagination) return;
+
+  pagination.innerHTML = "";
+
+  if (totalPages <= 1) return;
+
+  function createPageButton(text, page, isActive = false, isDisabled = false) {
+    const btn = document.createElement("button");
+
+    btn.textContent = text;
+    btn.className = isActive ? "page-btn active" : "page-btn";
+    btn.disabled = isDisabled;
+
+    if (!isDisabled && page) {
+      btn.addEventListener("click", () => {
+        currentPage = page;
+        renderTable(filteredLogs);
+      });
+    }
+
+    return btn;
+  }
+
+  pagination.appendChild(
+    createPageButton("‹", currentPage - 1, false, currentPage === 1)
+  );
+
+  pagination.appendChild(
+    createPageButton("1", 1, currentPage === 1)
+  );
+
+  if (currentPage > 4) {
+    const dots = document.createElement("span");
+    dots.className = "page-dots";
+    dots.textContent = "...";
+    pagination.appendChild(dots);
+  }
+
+  const startPage = Math.max(2, currentPage - 1);
+  const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+  for (let i = startPage; i <= endPage; i++) {
+    pagination.appendChild(
+      createPageButton(String(i), i, i === currentPage)
+    );
+  }
+
+  if (currentPage < totalPages - 3) {
+    const dots = document.createElement("span");
+    dots.className = "page-dots";
+    dots.textContent = "...";
+    pagination.appendChild(dots);
+  }
+
+  if (totalPages > 1) {
+    pagination.appendChild(
+      createPageButton(String(totalPages), totalPages, currentPage === totalPages)
+    );
+  }
+
+  pagination.appendChild(
+    createPageButton("›", currentPage + 1, false, currentPage === totalPages)
+  );
 }
 
 function renderAll(data) {
@@ -587,6 +673,8 @@ function renderAll(data) {
 }
 
 function applyFilters() {
+  currentPage = 1;
+
   const searchValue = logSearch ? logSearch.value.toLowerCase().trim() : "";
   const typeValue = typeFilter ? typeFilter.value : "all";
   const statusValue = statusFilter ? statusFilter.value : "all";
@@ -682,6 +770,7 @@ async function loadLogs() {
 
     logs = Array.isArray(data) ? data : [];
     filteredLogs = [...logs];
+    currentPage = 1;
 
     renderAll(filteredLogs);
   } catch (error) {

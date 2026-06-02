@@ -1216,3 +1216,50 @@ tbody tr:hover {
 .sidebar.collapsed .menu-group-title i {
   width: 20px;
 }
+.pagination {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  margin: 26px auto 4px auto;
+  padding: 14px 0;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(255,37,37,0.35);
+}
+
+.page-btn.active {
+  background: linear-gradient(135deg, var(--red), var(--red-2));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 14px 28px rgba(255,37,37,0.30);
+}
+
+.page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.page-dots {
+  color: var(--muted);
+  font-weight: 900;
+  padding: 0 4px;
+}
