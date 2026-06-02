@@ -142,9 +142,9 @@ function renderSegmentDonutChart() {
     series: values,
     labels,
     colors: [
-      "#ff2525",
+      "#2287c2",
       "#d9141c",
-      "#ff6b6b",
+      "#7023c2",
       "#8a8d95",
       "#333842",
       "#ffb020",

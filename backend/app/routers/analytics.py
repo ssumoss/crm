@@ -156,7 +156,8 @@ def get_top_ltv_customers(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 @router.get("/analytics/rfm/heatmap")
 def get_rfm_heatmap(
     db: Session = Depends(get_db),
@@ -241,6 +242,7 @@ def get_rfm_segment_risk_summary(
         "sadik": sadik
     }
 
+
 @router.get("/analytics/page-summary")
 def get_analytics_page_summary(
     db: Session = Depends(get_db),
@@ -282,21 +284,29 @@ def get_ltv_distribution(
     try:
         row = db.execute(text("""
             SELECT
-                COUNT(CASE WHEN ltv_tahmini >= 0 AND ltv_tahmini < 2000 THEN 1 END) AS r1,
-                COUNT(CASE WHEN ltv_tahmini >= 2000 AND ltv_tahmini < 5000 THEN 1 END) AS r2,
-                COUNT(CASE WHEN ltv_tahmini >= 5000 AND ltv_tahmini < 10000 THEN 1 END) AS r3,
-                COUNT(CASE WHEN ltv_tahmini >= 10000 AND ltv_tahmini < 20000 THEN 1 END) AS r4,
-                COUNT(CASE WHEN ltv_tahmini >= 20000 THEN 1 END) AS r5
+                COUNT(CASE WHEN COALESCE(ltv_tahmini, 0) >= 0 
+                            AND COALESCE(ltv_tahmini, 0) < 20000 THEN 1 END) AS r1,
+
+                COUNT(CASE WHEN COALESCE(ltv_tahmini, 0) >= 20000 
+                            AND COALESCE(ltv_tahmini, 0) < 40000 THEN 1 END) AS r2,
+
+                COUNT(CASE WHEN COALESCE(ltv_tahmini, 0) >= 40000 
+                            AND COALESCE(ltv_tahmini, 0) < 60000 THEN 1 END) AS r3,
+
+                COUNT(CASE WHEN COALESCE(ltv_tahmini, 0) >= 60000 
+                            AND COALESCE(ltv_tahmini, 0) < 80000 THEN 1 END) AS r4,
+
+                COUNT(CASE WHEN COALESCE(ltv_tahmini, 0) >= 80000 THEN 1 END) AS r5
             FROM analitik_tahminler
             WHERE ltv_tahmini IS NOT NULL
         """)).fetchone()
 
         return [
-            {"range": "0 - 2K", "count": int(row[0] or 0)},
-            {"range": "2K - 5K", "count": int(row[1] or 0)},
-            {"range": "5K - 10K", "count": int(row[2] or 0)},
-            {"range": "10K - 20K", "count": int(row[3] or 0)},
-            {"range": "20K+", "count": int(row[4] or 0)}
+            {"range": "0 - 20K", "count": int(row[0] or 0)},
+            {"range": "20K - 40K", "count": int(row[1] or 0)},
+            {"range": "40K - 60K", "count": int(row[2] or 0)},
+            {"range": "60K - 80K", "count": int(row[3] or 0)},
+            {"range": "80K - 100K+", "count": int(row[4] or 0)}
         ]
 
     except Exception as e:
@@ -348,7 +358,6 @@ def get_aov_trend(
         """), {"year": year}).fetchall()
 
         months = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"]
-
         data = {int(row[0]): float(row[1] or 0) for row in rows}
 
         return [
@@ -393,7 +402,8 @@ def get_ltv_churn_comparison(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 @router.get("/analytics/sales-forecast")
 def get_sales_forecast(
     year: int = 2025,
@@ -429,15 +439,13 @@ def get_sales_forecast(
 
         if len(filled) >= 3:
             last_values = [item["satis_tutari"] for item in filled[-3:]]
-            avg_growth = 0
-
             growths = []
+
             for i in range(1, len(last_values)):
                 if last_values[i - 1] > 0:
                     growths.append((last_values[i] - last_values[i - 1]) / last_values[i - 1])
 
-            if growths:
-                avg_growth = sum(growths) / len(growths)
+            avg_growth = sum(growths) / len(growths) if growths else 0
 
             last_month_index = filled[-1]["ay_no"]
             last_value = filled[-1]["satis_tutari"]

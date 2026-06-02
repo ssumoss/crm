@@ -160,18 +160,15 @@ function renderSummary(summary) {
 
 /* LTV DAĞILIMI: İlk mantık gibi count / müşteri sayısı */
 function getLtvRangeLabel(item, index) {
-  if (item.range) return item.range;
-  if (item.aralik) return item.aralik;
-  if (item.label) return item.label;
+  const fixedLabels = [
+    "0 - 20K",
+    "20K - 40K",
+    "40K - 60K",
+    "60K - 80K",
+    "80K - 100K+"
+  ];
 
-  const start = index * 20000;
-  const end = start + 20000;
-
-  if (index === ltvData.length - 1 && ltvData.length >= 5) {
-    return `₺${start / 1000}K+`;
-  }
-
-  return `₺${start / 1000}K - ₺${end / 1000}K`;
+  return item.range || item.aralik || item.label || fixedLabels[index] || "-";
 }
 
 function renderLtvBars() {
@@ -186,25 +183,41 @@ function renderLtvBars() {
     return;
   }
 
-  const labels = ltvData.map((item, index) => getLtvRangeLabel(item, index));
+  const fixedLabels = [
+    "0 - 20K",
+    "20K - 40K",
+    "40K - 60K",
+    "60K - 80K",
+    "80K - 100K+"
+  ];
 
-  const values = ltvData.map(item =>
-    Number(
-      item.count ??
-      item.musteri_sayisi ??
-      item.customer_count ??
-      item.sayi ??
-      item.total ??
+  const labels = fixedLabels;
+
+  const values = fixedLabels.map(label => {
+    const found = ltvData.find(item =>
+      item.range === label ||
+      item.aralik === label ||
+      item.label === label
+    );
+
+    return Number(
+      found?.count ??
+      found?.musteri_sayisi ??
+      found?.customer_count ??
+      found?.sayi ??
+      found?.total ??
       0
-    )
-  );
+    );
+  });
 
   ltvBars.innerHTML = "";
 
+  const baseOptions = getBaseChartOptions();
+
   const options = {
-    ...getBaseChartOptions(),
+    ...baseOptions,
     chart: {
-      ...getBaseChartOptions().chart,
+      ...baseOptions.chart,
       type: "bar",
       height: 320
     },
@@ -217,10 +230,10 @@ function renderLtvBars() {
     xaxis: {
       categories: labels,
       labels: {
-        rotate: -25,
+        rotate: 0,
         trim: false,
         style: {
-          fontWeight: 700
+          fontWeight: 800
         }
       }
     },
@@ -233,7 +246,7 @@ function renderLtvBars() {
     plotOptions: {
       bar: {
         borderRadius: 8,
-        columnWidth: "48%"
+        columnWidth: "46%"
       }
     },
     dataLabels: {
