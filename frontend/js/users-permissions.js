@@ -12,8 +12,6 @@ const alertContainer = document.getElementById("alertContainer");
 const userTableBody = document.getElementById("userTableBody");
 const userCountText = document.getElementById("userCountText");
 const roleDashboard = document.getElementById("roleDashboard");
-const permissionLogList = document.getElementById("permissionLogList");
-const permissionMatrix = document.getElementById("permissionMatrix");
 
 const permissionModal = document.getElementById("permissionModal");
 const closeModal = document.getElementById("closeModal");
@@ -31,7 +29,6 @@ const addUserBtn = document.getElementById("addUserBtn");
 
 let users = [];
 let roles = [];
-let permissions = [];
 let filteredUsers = [];
 
 function cleanRoleName(roleName) {
@@ -43,7 +40,7 @@ function cleanRoleName(roleName) {
     user: "Standart Kullanıcı"
   };
 
-  return roleMap[roleName] || roleName;
+  return roleMap[roleName] || roleName || "-";
 }
 
 function cleanPermissionName(permissionCode) {
@@ -53,28 +50,42 @@ function cleanPermissionName(permissionCode) {
     "super_admin"
   ];
 
-  if (hiddenPermissions.includes(permissionCode)) {
+  if (!permissionCode || hiddenPermissions.includes(permissionCode)) {
     return null;
   }
 
   const map = {
     dashboard_goruntule: "Dashboard Görüntüleme",
+
     musteri_goruntule: "Müşteri Görüntüleme",
     musteri_detay_goruntule: "Müşteri Detay Görüntüleme",
+
     veri_import: "Veri Aktarma",
+    rapor_export: "Rapor Dışa Aktarma",
+
     rfm_analizi_calistir: "RFM Analizi Çalıştırma",
     churn_analizi_calistir: "Churn Analizi Çalıştırma",
     ltv_analizi_calistir: "LTV Analizi Çalıştırma",
-    rapor_export: "Rapor Dışa Aktarma",
+
+    segment_goruntule: "Segment Görüntüleme",
+    segment_gecmisi_goruntule: "Segment Geçmişi Görüntüleme",
+    segment_gecmisi_calistir: "Segment Geçmişi Çalıştırma",
+
     kullanici_yonet: "Kullanıcı Yönetimi",
     rol_yonet: "Rol Yönetimi",
     izin_yonet: "Yetki Yönetimi",
+
     audit_log_goruntule: "Denetim Logları",
-    hata_log_goruntule: "Hata Logları",
-    segment_gecmisi_calistir: "Segment Geçmişi Çalıştırma"
+    hata_log_goruntule: "Hata Logları"
   };
 
-  return map[permissionCode] || String(permissionCode || "").replaceAll("_", " ");
+  if (map[permissionCode]) {
+    return map[permissionCode];
+  }
+
+  return String(permissionCode)
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, char => char.toLocaleUpperCase("tr-TR"));
 }
 
 function visiblePermissions(permissionList = []) {
@@ -95,13 +106,17 @@ function getDashboardText(roleName) {
   return map[roleName] || "Rol bazlı erişim tanımlıdır.";
 }
 
+function getStatusText(user) {
+  return user.aktif_mi ? "Aktif" : "Pasif";
+}
+
 async function fetchUsers() {
   try {
     users = await apiRequest("/users/");
     filteredUsers = [...users];
 
     renderUsers(filteredUsers);
-    renderKpis(filteredUsers);
+    renderKpis();
     renderRoleDashboard();
   } catch (error) {
     console.error(error);
@@ -116,20 +131,10 @@ async function fetchRoles() {
     renderRoleFilter();
     renderNewUserRoleSelect();
     renderRoleDashboard();
-    renderKpis(filteredUsers);
+    renderKpis();
   } catch (error) {
     console.error(error);
     alert("Rol verileri alınamadı: " + error.message);
-  }
-}
-
-async function fetchPermissions() {
-  try {
-    permissions = await apiRequest("/permissions/");
-    renderPermissionMatrix();
-  } catch (error) {
-    console.error(error);
-    alert("Yetki verileri alınamadı: " + error.message);
   }
 }
 
@@ -159,10 +164,6 @@ function renderNewUserRoleSelect() {
       </option>
     `;
   });
-}
-
-function getStatusText(user) {
-  return user.aktif_mi ? "Aktif" : "Pasif";
 }
 
 function renderKpis() {
@@ -197,6 +198,7 @@ function renderUsers(data) {
         <td colspan="7">Kullanıcı bulunamadı.</td>
       </tr>
     `;
+
     userCountText.textContent = "0 kullanıcı listeleniyor";
     return;
   }
@@ -208,10 +210,10 @@ function renderUsers(data) {
     userTableBody.innerHTML += `
       <tr>
         <td>
-          <strong>${user.ad} ${user.soyad}</strong>
+          <strong>${user.ad || "-"} ${user.soyad || ""}</strong>
         </td>
 
-        <td>${user.email}</td>
+        <td>${user.email || "-"}</td>
 
         <td>${cleanRoleName(user.rol_adi)}</td>
 
@@ -266,6 +268,20 @@ function renderRoleDashboard() {
 
   roleDashboard.innerHTML = "";
 
+  if (!roles.length) {
+    roleDashboard.innerHTML = `
+      <div class="role-card">
+        <i class="fa-solid fa-user-shield"></i>
+        <div>
+          <h4>Rol bulunamadı</h4>
+          <p>Tanımlı rol kaydı yok.</p>
+        </div>
+        <span class="status passive">0</span>
+      </div>
+    `;
+    return;
+  }
+
   roles.forEach(role => {
     const roleUsers = users.filter(user => user.rol_adi === role.rol_adi);
 
@@ -284,65 +300,6 @@ function renderRoleDashboard() {
   });
 }
 
-function renderPermissionLogs() {
-  if (!permissionLogList) return;
-
-  permissionLogList.innerHTML = `
-    <div class="log-item">
-      <i class="fa-solid fa-circle-check"></i>
-
-      <div>
-        <h4>Sistem aktif</h4>
-        <p>Kullanıcı ve yetki yönetimi backend ile bağlantılı çalışıyor.</p>
-      </div>
-
-      <span class="status active">Canlı</span>
-    </div>
-  `;
-}
-
-function renderPermissionMatrix() {
-  if (!permissionMatrix) return;
-
-  permissionMatrix.innerHTML = "";
-
-  const visiblePermissionRows = permissions
-    .map(permission => ({
-      ...permission,
-      temiz_ad: cleanPermissionName(permission.izin_kodu)
-    }))
-    .filter(permission => permission.temiz_ad);
-
-  if (visiblePermissionRows.length === 0) {
-    permissionMatrix.innerHTML = `
-      <div class="matrix-row">
-        <i class="fa-solid fa-key"></i>
-        <div>
-          <h4>Yetki bulunamadı</h4>
-          <p>Gösterilecek yetki kaydı yok.</p>
-        </div>
-        <span class="status passive">Boş</span>
-      </div>
-    `;
-    return;
-  }
-
-  visiblePermissionRows.forEach(permission => {
-    permissionMatrix.innerHTML += `
-      <div class="matrix-row">
-        <i class="fa-solid fa-key"></i>
-
-        <div>
-          <h4>${permission.temiz_ad}</h4>
-          <p>${permission.modul_adi || "Genel Modül"}</p>
-        </div>
-
-        <span class="status active">Aktif</span>
-      </div>
-    `;
-  });
-}
-
 function openPermissionModal(userId) {
   const user = users.find(item => item.kullanici_id === userId);
 
@@ -350,7 +307,7 @@ function openPermissionModal(userId) {
 
   const userPermissions = visiblePermissions(user.izinler || []);
 
-  modalTitle.textContent = `${user.ad} ${user.soyad} - Yetkiler`;
+  modalTitle.textContent = `${user.ad || "-"} ${user.soyad || ""} - Yetkiler`;
 
   modalContent.innerHTML = `
     <div class="modal-row">
@@ -365,7 +322,7 @@ function openPermissionModal(userId) {
 
     <div class="modal-row">
       <h4>E-posta</h4>
-      <p>${user.email}</p>
+      <p>${user.email || "-"}</p>
     </div>
 
     <div class="modal-row">
@@ -391,20 +348,21 @@ function openPermissionModal(userId) {
 window.openPermissionModal = openPermissionModal;
 
 function applyFilters() {
-  const searchValue = userSearch ? userSearch.value.toLowerCase().trim() : "";
+  const searchValue = userSearch ? userSearch.value.toLocaleLowerCase("tr-TR").trim() : "";
   const roleValue = roleFilter ? roleFilter.value : "all";
   const statusValue = statusFilter ? statusFilter.value : "all";
 
   filteredUsers = users.filter(user => {
     const permissionText = visiblePermissions(user.izinler || [])
       .join(" ")
-      .toLowerCase();
+      .toLocaleLowerCase("tr-TR");
+
+    const fullName = `${user.ad || ""} ${user.soyad || ""}`.toLocaleLowerCase("tr-TR");
 
     const searchMatch =
-      String(user.ad || "").toLowerCase().includes(searchValue) ||
-      String(user.soyad || "").toLowerCase().includes(searchValue) ||
-      String(user.email || "").toLowerCase().includes(searchValue) ||
-      cleanRoleName(user.rol_adi).toLowerCase().includes(searchValue) ||
+      fullName.includes(searchValue) ||
+      String(user.email || "").toLocaleLowerCase("tr-TR").includes(searchValue) ||
+      cleanRoleName(user.rol_adi).toLocaleLowerCase("tr-TR").includes(searchValue) ||
       permissionText.includes(searchValue);
 
     const roleMatch =
@@ -495,7 +453,7 @@ function exportPermissions() {
   filteredUsers.forEach(user => {
     const userPermissions = visiblePermissions(user.izinler || []);
 
-    csv += `"${user.ad} ${user.soyad}","${user.email}","${cleanRoleName(user.rol_adi)}","${getStatusText(user)}","${userPermissions.join(" | ")}"\n`;
+    csv += `"${user.ad || ""} ${user.soyad || ""}","${user.email || ""}","${cleanRoleName(user.rol_adi)}","${getStatusText(user)}","${userPermissions.join(" | ")}"\n`;
   });
 
   const blob = new Blob(["\uFEFF" + csv], {
@@ -541,9 +499,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   setupUsersPermissionEvents();
 
   renderAlerts();
-  renderPermissionLogs();
 
   await fetchRoles();
-  await fetchPermissions();
   await fetchUsers();
 });
