@@ -21,7 +21,8 @@ def get_channel_summary_service(db):
             ), 0) AS magaza_ciro
 
         FROM satis_noktalari sn
-        LEFT JOIN satis_tipleri st ON sn.satis_tipi_id = st.satis_tipi_id
+        LEFT JOIN satis_tipleri st 
+            ON sn.satis_tipi_id = st.satis_tipi_id
         LEFT JOIN faturalar f 
             ON sn.satis_noktasi_id = f.satis_noktasi_id
            AND f.belge_tipi_id = 1
@@ -63,9 +64,12 @@ def get_all_channels_service(db):
             COUNT(CASE WHEN f.belge_tipi_id = 1 THEN 1 END) AS siparis_sayisi,
             COALESCE(AVG(CASE WHEN f.belge_tipi_id = 1 THEN f.fatura_tutari END), 0) AS aov
         FROM satis_noktalari sn
-        LEFT JOIN satis_tipleri st ON sn.satis_tipi_id = st.satis_tipi_id
-        LEFT JOIN sehirler s ON sn.sehir_id = s.sehir_id
-        LEFT JOIN faturalar f ON sn.satis_noktasi_id = f.satis_noktasi_id
+        LEFT JOIN satis_tipleri st 
+            ON sn.satis_tipi_id = st.satis_tipi_id
+        LEFT JOIN sehirler s 
+            ON sn.sehir_id = s.sehir_id
+        LEFT JOIN faturalar f 
+            ON sn.satis_noktasi_id = f.satis_noktasi_id
         GROUP BY
             sn.satis_noktasi_id,
             sn.satis_noktasi_adi,
@@ -88,6 +92,7 @@ def get_all_channels_service(db):
         ciro_skor = (ciro / max_ciro) * 45 if max_ciro else 0
         siparis_skor = (siparis / max_siparis) * 35 if max_siparis else 0
         aov_skor = (aov / max_aov) * 20 if max_aov else 0
+
         skor = round(ciro_skor + siparis_skor + aov_skor)
 
         if skor >= 75:
@@ -98,7 +103,7 @@ def get_all_channels_service(db):
             durum = "Düşük"
 
         data.append({
-            "satis_noktasi_id": int(row[0]),
+            "satis_noktasi_id": int(row[0] or 0),
             "satis_noktasi": row[1] or "-",
             "kanal_tipi": row[2] or "-",
             "sehir": row[3] or "-",
@@ -122,8 +127,10 @@ def get_channel_type_analysis_service(db):
             COALESCE(SUM(CASE WHEN f.belge_tipi_id = 1 THEN f.fatura_tutari ELSE 0 END), 0) AS ciro,
             COUNT(CASE WHEN f.belge_tipi_id = 1 THEN 1 END) AS siparis
         FROM satis_noktalari sn
-        LEFT JOIN satis_tipleri st ON sn.satis_tipi_id = st.satis_tipi_id
-        LEFT JOIN faturalar f ON sn.satis_noktasi_id = f.satis_noktasi_id
+        LEFT JOIN satis_tipleri st 
+            ON sn.satis_tipi_id = st.satis_tipi_id
+        LEFT JOIN faturalar f 
+            ON sn.satis_noktasi_id = f.satis_noktasi_id
         GROUP BY kanal_tipi
         ORDER BY ciro DESC
     """)).fetchall()
@@ -145,8 +152,10 @@ def get_channel_city_analysis_service(db):
             COALESCE(SUM(CASE WHEN f.belge_tipi_id = 1 THEN f.fatura_tutari ELSE 0 END), 0) AS ciro,
             COUNT(CASE WHEN f.belge_tipi_id = 1 THEN 1 END) AS siparis
         FROM satis_noktalari sn
-        LEFT JOIN sehirler s ON sn.sehir_id = s.sehir_id
-        LEFT JOIN faturalar f ON sn.satis_noktasi_id = f.satis_noktasi_id
+        LEFT JOIN sehirler s 
+            ON sn.sehir_id = s.sehir_id
+        LEFT JOIN faturalar f 
+            ON sn.satis_noktasi_id = f.satis_noktasi_id
         GROUP BY s.sehir_id, s.sehir_adi
         ORDER BY ciro DESC
     """)).fetchall()

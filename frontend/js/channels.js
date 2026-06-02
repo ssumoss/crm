@@ -1,6 +1,18 @@
 const channelSearch = document.getElementById("channelSearch");
 const typeFilter = document.getElementById("typeFilter");
 const cityFilter = document.getElementById("cityFilter");
+const statusFilter = document.getElementById("statusFilter");
+
+const minRevenueFilter = document.getElementById("minRevenueFilter");
+const maxRevenueFilter = document.getElementById("maxRevenueFilter");
+const minOrderFilter = document.getElementById("minOrderFilter");
+const maxOrderFilter = document.getElementById("maxOrderFilter");
+const minAovFilter = document.getElementById("minAovFilter");
+const maxAovFilter = document.getElementById("maxAovFilter");
+const minScoreFilter = document.getElementById("minScoreFilter");
+const maxScoreFilter = document.getElementById("maxScoreFilter");
+
+const clearChannelFiltersBtn = document.getElementById("clearChannelFiltersBtn");
 const exportBtn = document.getElementById("exportBtn");
 
 const totalPoint = document.getElementById("totalPoint");
@@ -24,6 +36,7 @@ let typeAnalysis = [];
 let cityAnalysis = [];
 let channelMap = null;
 let channelApexChart = null;
+let searchTimer = null;
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString("tr-TR");
@@ -90,19 +103,10 @@ function createTooltip(title, value) {
       font-family:Inter, sans-serif;
       min-width:140px;
     ">
-      <div style="
-        font-size:12px;
-        color:${theme.mutedColor};
-        font-weight:800;
-        margin-bottom:5px;
-      ">
+      <div style="font-size:12px;color:${theme.mutedColor};font-weight:800;margin-bottom:5px;">
         ${title}
       </div>
-      <div style="
-        font-size:15px;
-        color:${theme.textColor};
-        font-weight:900;
-      ">
+      <div style="font-size:15px;color:${theme.textColor};font-weight:900;">
         ${value}
       </div>
     </div>
@@ -288,7 +292,6 @@ function renderInsights(data) {
   `;
 }
 
-/* HARİTA KISMI AYNI BIRAKILDI */
 function getBranchCoords(point, index = 0) {
   const name = normalizeText(point.satis_noktasi);
   const city = normalizeText(point.sehir);
@@ -389,7 +392,6 @@ function renderChannelMap(data) {
     cityCounter[cityKey] = (cityCounter[cityKey] || 0) + 1;
 
     const coords = getBranchCoords(point, cityCounter[cityKey]);
-
     if (!coords) return;
 
     bounds.push(coords);
@@ -516,26 +518,89 @@ function fillFilters() {
   }
 }
 
+function getFilterNumber(input) {
+  if (!input || input.value === "") return null;
+  return Number(input.value);
+}
+
 function applyFilters() {
   const searchValue = channelSearch ? normalizeText(channelSearch.value) : "";
   const typeValue = typeFilter ? typeFilter.value : "all";
   const cityValue = cityFilter ? cityFilter.value : "all";
+  const statusValue = statusFilter ? statusFilter.value : "all";
+
+  const minRevenue = getFilterNumber(minRevenueFilter);
+  const maxRevenue = getFilterNumber(maxRevenueFilter);
+  const minOrder = getFilterNumber(minOrderFilter);
+  const maxOrder = getFilterNumber(maxOrderFilter);
+  const minAov = getFilterNumber(minAovFilter);
+  const maxAov = getFilterNumber(maxAovFilter);
+  const minScore = getFilterNumber(minScoreFilter);
+  const maxScore = getFilterNumber(maxScoreFilter);
 
   filteredPoints = salesPoints.filter(point => {
+    const score = Number(point.performans_skoru || 0);
+    const status = point.durum || getScoreStatus(score);
+    const ciro = Number(point.ciro || 0);
+    const siparis = Number(point.siparis || 0);
+    const aov = Number(point.aov || 0);
+
     const searchMatch =
       normalizeText(point.satis_noktasi).includes(searchValue) ||
       normalizeText(point.kanal_tipi).includes(searchValue) ||
       normalizeText(point.sehir).includes(searchValue);
 
-    const typeMatch =
-      typeValue === "all" || point.kanal_tipi === typeValue;
+    const typeMatch = typeValue === "all" || point.kanal_tipi === typeValue;
+    const cityMatch = cityValue === "all" || point.sehir === cityValue;
+    const statusMatch = statusValue === "all" || status === statusValue;
 
-    const cityMatch =
-      cityValue === "all" || point.sehir === cityValue;
+    const revenueMatch =
+      (minRevenue === null || ciro >= minRevenue) &&
+      (maxRevenue === null || ciro <= maxRevenue);
 
-    return searchMatch && typeMatch && cityMatch;
+    const orderMatch =
+      (minOrder === null || siparis >= minOrder) &&
+      (maxOrder === null || siparis <= maxOrder);
+
+    const aovMatch =
+      (minAov === null || aov >= minAov) &&
+      (maxAov === null || aov <= maxAov);
+
+    const scoreMatch =
+      (minScore === null || score >= minScore) &&
+      (maxScore === null || score <= maxScore);
+
+    return (
+      searchMatch &&
+      typeMatch &&
+      cityMatch &&
+      statusMatch &&
+      revenueMatch &&
+      orderMatch &&
+      aovMatch &&
+      scoreMatch
+    );
   });
 
+  renderAll(filteredPoints);
+}
+
+function clearChannelFilters() {
+  if (channelSearch) channelSearch.value = "";
+  if (typeFilter) typeFilter.value = "all";
+  if (cityFilter) cityFilter.value = "all";
+  if (statusFilter) statusFilter.value = "all";
+
+  if (minRevenueFilter) minRevenueFilter.value = "";
+  if (maxRevenueFilter) maxRevenueFilter.value = "";
+  if (minOrderFilter) minOrderFilter.value = "";
+  if (maxOrderFilter) maxOrderFilter.value = "";
+  if (minAovFilter) minAovFilter.value = "";
+  if (maxAovFilter) maxAovFilter.value = "";
+  if (minScoreFilter) minScoreFilter.value = "";
+  if (maxScoreFilter) maxScoreFilter.value = "";
+
+  filteredPoints = [...salesPoints];
   renderAll(filteredPoints);
 }
 
@@ -598,10 +663,42 @@ async function loadChannelsPage() {
 }
 
 function setupChannelEvents() {
-  if (channelSearch) channelSearch.addEventListener("input", applyFilters);
+  if (channelSearch) {
+    channelSearch.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilters, 350);
+    });
+  }
+
   if (typeFilter) typeFilter.addEventListener("change", applyFilters);
   if (cityFilter) cityFilter.addEventListener("change", applyFilters);
-  if (exportBtn) exportBtn.addEventListener("click", exportChannels);
+  if (statusFilter) statusFilter.addEventListener("change", applyFilters);
+
+  [
+    minRevenueFilter,
+    maxRevenueFilter,
+    minOrderFilter,
+    maxOrderFilter,
+    minAovFilter,
+    maxAovFilter,
+    minScoreFilter,
+    maxScoreFilter
+  ].forEach(input => {
+    if (input) {
+      input.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(applyFilters, 400);
+      });
+    }
+  });
+
+  if (clearChannelFiltersBtn) {
+    clearChannelFiltersBtn.addEventListener("click", clearChannelFilters);
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener("click", exportChannels);
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {

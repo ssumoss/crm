@@ -1252,3 +1252,73 @@ tbody tr:hover {
 .sidebar.collapsed .menu-group-title i {
   width: 20px;
 }
+
+/* =========================
+   CHANNEL FILTER INPUTS
+========================= */
+
+.filter-group input {
+  height: 42px;
+  border-radius: 12px;
+  background: var(--card-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0 14px;
+  font-weight: 850;
+  outline: none;
+}
+
+.filter-group input::placeholder {
+  color: var(--muted);
+}
+
+body.light-mode .filter-group input {
+  background: rgba(0,0,0,0.04);
+  color: #111827;
+}
+
+/* =========================
+   TABLE SCROLLBAR FIX
+========================= */
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  height: 7px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--red);
+  border-radius: 999px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--red-2);
+}
+
+.table-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: var(--red) transparent;
+}
+
+/* =========================
+   RESPONSIVE FILTERS
+========================= */
+
+@media (max-width: 900px) {
+  .filter-group,
+  .filter-group input,
+  .filter-group select,
+  .export-btn {
+    width: 100%;
+  }
+}

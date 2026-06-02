@@ -6,16 +6,8 @@
   <title>Sporthink CRM - Satış Noktaları</title>
 
   <link rel="stylesheet" href="/css/channels.css" />
-
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-  />
-
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -35,118 +27,116 @@
       </button>
 
       <nav class="menu">
+        <a href="dashboard.html" data-permission="dashboard_goruntule">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Özet</span>
+        </a>
 
-  <a href="dashboard.html" data-permission="dashboard_goruntule">
-    <i class="fa-solid fa-chart-line"></i>
-    <span>Özet</span>
-  </a>
+        <div class="menu-group">
+          <button type="button" class="menu-group-title">
+            <i class="fa-solid fa-users"></i>
+            <span>Müşteri Yönetimi</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
 
-  <div class="menu-group">
-    <button type="button" class="menu-group-title">
-      <i class="fa-solid fa-users"></i>
-      <span>Müşteri Yönetimi</span>
-      <i class="fa-solid fa-chevron-down"></i>
-    </button>
+          <div class="submenu">
+            <a href="customers.html" data-permission="musteri_goruntule">
+              <i class="fa-solid fa-user-group"></i>
+              <span>Müşteriler</span>
+            </a>
 
-    <div class="submenu">
-      <a href="customers.html" data-permission="musteri_goruntule">
-        <i class="fa-solid fa-user-group"></i>
-        <span>Müşteriler</span>
-      </a>
+            <a href="segment-history.html" data-permission="segment_gecmisi_goruntule">
+              <i class="fa-solid fa-timeline"></i>
+              <span>Segment Geçmişi</span>
+            </a>
+          </div>
+        </div>
 
-      <a href="segment-history.html" data-permission="segment_gecmisi_goruntule">
-        <i class="fa-solid fa-timeline"></i>
-        <span>Segment Geçmişi</span>
-      </a>
-    </div>
-  </div>
+        <div class="menu-group">
+          <button type="button" class="menu-group-title">
+            <i class="fa-solid fa-database"></i>
+            <span>Satış Verileri</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
 
-  <div class="menu-group">
-    <button type="button" class="menu-group-title">
-      <i class="fa-solid fa-database"></i>
-      <span>Satış Verileri</span>
-      <i class="fa-solid fa-chevron-down"></i>
-    </button>
+          <div class="submenu">
+            <a href="invoices.html" data-permission="musteri_detay_goruntule">
+              <i class="fa-solid fa-file-invoice"></i>
+              <span>Faturalar</span>
+            </a>
 
-    <div class="submenu">
-      <a href="invoices.html" data-permission="musteri_detay_goruntule">
-        <i class="fa-solid fa-file-invoice"></i>
-        <span>Faturalar</span>
-      </a>
+            <a href="products.html" data-permission="veri_import">
+              <i class="fa-solid fa-box"></i>
+              <span>Ürünler</span>
+            </a>
 
-      <a href="products.html" data-permission="veri_import">
-        <i class="fa-solid fa-box"></i>
-        <span>Ürünler</span>
-      </a>
+            <a href="returns.html" data-permission="veri_import">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>İadeler</span>
+            </a>
 
-      <a href="returns.html" data-permission="veri_import">
-        <i class="fa-solid fa-rotate-left"></i>
-        <span>İadeler</span>
-      </a>
+            <a href="channels.html" data-permission="veri_import">
+              <i class="fa-solid fa-store"></i>
+              <span>Satış Noktaları</span>
+            </a>
+          </div>
+        </div>
 
-      <a href="channels.html" data-permission="veri_import">
-        <i class="fa-solid fa-store"></i>
-        <span>Satış Noktaları</span>
-      </a>
-    </div>
-  </div>
+        <div class="menu-group">
+          <button type="button" class="menu-group-title">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Analizler</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
 
-  <div class="menu-group">
-    <button type="button" class="menu-group-title">
-      <i class="fa-solid fa-chart-pie"></i>
-      <span>Analizler</span>
-      <i class="fa-solid fa-chevron-down"></i>
-    </button>
+          <div class="submenu">
+            <a href="rfm.html" data-permission="rfm_analizi_calistir">
+              <i class="fa-solid fa-ranking-star"></i>
+              <span>RFM Analizi</span>
+            </a>
 
-    <div class="submenu">
-      <a href="rfm.html" data-permission="rfm_analizi_calistir">
-        <i class="fa-solid fa-ranking-star"></i>
-        <span>RFM Analizi</span>
-      </a>
+            <a href="analytics.html" data-permission="ltv_analizi_calistir">
+              <i class="fa-solid fa-chart-simple"></i>
+              <span>Analitik</span>
+            </a>
 
-      <a href="analytics.html" data-permission="ltv_analizi_calistir">
-        <i class="fa-solid fa-chart-simple"></i>
-        <span>Analitik</span>
-      </a>
+            <a href="reports.html" data-permission="rapor_export">
+              <i class="fa-solid fa-file-export"></i>
+              <span>Raporlar</span>
+            </a>
+          </div>
+        </div>
 
-      <a href="reports.html" data-permission="rapor_export">
-        <i class="fa-solid fa-file-export"></i>
-        <span>Raporlar</span>
-      </a>
-    </div>
-  </div>
+        <div class="menu-group">
+          <button type="button" class="menu-group-title">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Yönetim</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
 
-  <div class="menu-group">
-    <button type="button" class="menu-group-title">
-      <i class="fa-solid fa-shield-halved"></i>
-      <span>Yönetim</span>
-      <i class="fa-solid fa-chevron-down"></i>
-    </button>
+          <div class="submenu">
+            <a href="users-permissions.html" data-permission="kullanici_yonet">
+              <i class="fa-solid fa-user-shield"></i>
+              <span>Kullanıcı & Yetki</span>
+            </a>
 
-    <div class="submenu">
-      <a href="users-permissions.html" data-permission="kullanici_yonet">
-        <i class="fa-solid fa-user-shield"></i>
-        <span>Kullanıcı & Yetki</span>
-      </a>
+            <a href="logs-audit.html" data-permission="audit_log_goruntule">
+              <i class="fa-solid fa-clipboard-list"></i>
+              <span>Log & Denetim</span>
+            </a>
 
-      <a href="logs-audit.html" data-permission="audit_log_goruntule">
-        <i class="fa-solid fa-clipboard-list"></i>
-        <span>Log & Denetim</span>
-      </a>
+            <a href="settings.html" data-permission="izin_yonet">
+              <i class="fa-solid fa-gear"></i>
+              <span>Ayarlar</span>
+            </a>
+          </div>
+        </div>
 
-      <a href="settings.html" data-permission="izin_yonet">
-        <i class="fa-solid fa-gear"></i>
-        <span>Ayarlar</span>
-      </a>
-    </div>
-  </div>
-
-  <a href="login.html">
-    <i class="fa-solid fa-right-from-bracket"></i>
-    <span>Çıkış</span>
-  </a>
-
-</nav>
+        <a href="login.html">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Çıkış</span>
+        </a>
+      </nav>
     </aside>
 
     <main class="main">
@@ -176,7 +166,6 @@
                 <h4>Bildirimler</h4>
                 <button id="markAllReadBtn">Tümünü okundu yap</button>
               </div>
-
               <div id="notificationList" class="dropdown-list">
                 <p class="empty-text">Bildirim yok.</p>
               </div>
@@ -199,9 +188,7 @@
                 <select id="messageUserSelect">
                   <option value="">Alıcı kullanıcı seç</option>
                 </select>
-
                 <textarea id="messageText" placeholder="Mesaj yaz..."></textarea>
-
                 <button id="sendMessageBtn">
                   <i class="fa-solid fa-paper-plane"></i>
                   Gönder
@@ -217,14 +204,10 @@
                   <i class="fa-solid fa-arrow-left"></i>
                   Mesajlara dön
                 </button>
-
                 <h4 id="detailSenderName">Gönderen</h4>
                 <span id="detailMessageDate">Tarih</span>
-
                 <p id="detailMessageText">Mesaj içeriği</p>
-
                 <textarea id="replyMessageText" placeholder="Cevap yaz..."></textarea>
-
                 <button id="sendReplyBtn">
                   <i class="fa-solid fa-reply"></i>
                   Cevapla
@@ -311,6 +294,61 @@
           </select>
         </div>
 
+        <div class="filter-group">
+          <label>Durum</label>
+          <select id="statusFilter">
+            <option value="all">Tümü</option>
+            <option value="Yüksek">Yüksek</option>
+            <option value="Orta">Orta</option>
+            <option value="Düşük">Düşük</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Min Ciro</label>
+          <input id="minRevenueFilter" type="number" min="0" placeholder="₺" />
+        </div>
+
+        <div class="filter-group">
+          <label>Max Ciro</label>
+          <input id="maxRevenueFilter" type="number" min="0" placeholder="₺" />
+        </div>
+
+        <div class="filter-group">
+          <label>Min Sipariş</label>
+          <input id="minOrderFilter" type="number" min="0" placeholder="0" />
+        </div>
+
+        <div class="filter-group">
+          <label>Max Sipariş</label>
+          <input id="maxOrderFilter" type="number" min="0" placeholder="9999" />
+        </div>
+
+        <div class="filter-group">
+          <label>Min AOV</label>
+          <input id="minAovFilter" type="number" min="0" placeholder="₺" />
+        </div>
+
+        <div class="filter-group">
+          <label>Max AOV</label>
+          <input id="maxAovFilter" type="number" min="0" placeholder="₺" />
+        </div>
+
+        <div class="filter-group">
+          <label>Min Skor</label>
+          <input id="minScoreFilter" type="number" min="0" max="100" placeholder="0" />
+        </div>
+
+        <div class="filter-group">
+          <label>Max Skor</label>
+          <input id="maxScoreFilter" type="number" min="0" max="100" placeholder="100" />
+        </div>
+
+        <button class="export-btn" id="clearChannelFiltersBtn" type="button">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+          Temizle
+        </button>
+
         <button class="export-btn" id="exportBtn">
           <i class="fa-solid fa-file-export"></i>
           Kanal Export
@@ -323,7 +361,6 @@
             <h3>Kanal Bazlı Satış</h3>
             <button>Online / Mağaza</button>
           </div>
-
           <div id="channelChart" class="apex-chart"></div>
         </div>
 
@@ -332,7 +369,6 @@
             <h3>Harita / CBS</h3>
             <button>Şehir Bazlı</button>
           </div>
-
           <div class="map-box real-map" id="channelMap"></div>
         </div>
       </section>
@@ -360,7 +396,11 @@
               </tr>
             </thead>
 
-            <tbody id="pointTableBody"></tbody>
+            <tbody id="pointTableBody">
+              <tr>
+                <td colspan="8">Veriler yükleniyor...</td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </section>
@@ -371,7 +411,6 @@
             <h3>Kanal İçgörüleri</h3>
             <a href="#">Detay</a>
           </div>
-
           <div class="insight-list" id="channelInsights"></div>
         </div>
 
@@ -380,7 +419,6 @@
             <h3>Şube Performans Skoru</h3>
             <span>Ciro + Sipariş + AOV</span>
           </div>
-
           <div class="score-detail-box" id="scoreDetailBox"></div>
         </div>
       </section>
