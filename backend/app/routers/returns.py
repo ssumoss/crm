@@ -18,26 +18,66 @@ router = APIRouter(prefix="/returns", tags=["Returns"])
 
 @router.get("/")
 def get_all_returns(
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=500),
+    search: str | None = Query(None),
+    satis_noktasi: str | None = Query(None),
+    risk: str | None = Query(None),
+    year: int | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    min_tutar: float | None = Query(None),
+    max_tutar: float | None = Query(None),
     db: Session = Depends(get_db),
     current_user: Kullanicilar = Depends(permission_required("musteri_goruntule"))
 ):
     try:
-        return get_all_returns_service(db, limit, offset)
+        return get_all_returns_service(
+            db=db,
+            page=page,
+            limit=limit,
+            search=search,
+            satis_noktasi=satis_noktasi,
+            risk=risk,
+            year=year,
+            start_date=start_date,
+            end_date=end_date,
+            min_tutar=min_tutar,
+            max_tutar=max_tutar
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("")
 def get_all_returns_no_slash(
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=500),
+    search: str | None = Query(None),
+    satis_noktasi: str | None = Query(None),
+    risk: str | None = Query(None),
+    year: int | None = Query(None),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    min_tutar: float | None = Query(None),
+    max_tutar: float | None = Query(None),
     db: Session = Depends(get_db),
     current_user: Kullanicilar = Depends(permission_required("musteri_goruntule"))
 ):
     try:
-        return get_all_returns_service(db, limit, offset)
+        return get_all_returns_service(
+            db=db,
+            page=page,
+            limit=limit,
+            search=search,
+            satis_noktasi=satis_noktasi,
+            risk=risk,
+            year=year,
+            start_date=start_date,
+            end_date=end_date,
+            min_tutar=min_tutar,
+            max_tutar=max_tutar
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

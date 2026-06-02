@@ -2,6 +2,13 @@ const returnSearch = document.getElementById("returnSearch");
 const pointFilter = document.getElementById("pointFilter");
 const riskFilter = document.getElementById("riskFilter");
 const yearFilter = document.getElementById("yearFilter");
+
+const startDateFilter = document.getElementById("startDateFilter");
+const endDateFilter = document.getElementById("endDateFilter");
+const minReturnAmountFilter = document.getElementById("minReturnAmountFilter");
+const maxReturnAmountFilter = document.getElementById("maxReturnAmountFilter");
+
+const clearReturnFiltersBtn = document.getElementById("clearReturnFiltersBtn");
 const exportBtn = document.getElementById("exportBtn");
 
 const totalReturns = document.getElementById("totalReturns");
@@ -20,6 +27,7 @@ const trendInfoBtn = document.getElementById("trendInfoBtn");
 
 const returnTableBody = document.getElementById("returnTableBody");
 const returnCountText = document.getElementById("returnCountText");
+const returnPagination = document.getElementById("returnPagination");
 
 let returns = [];
 let filteredReturns = [];
@@ -27,9 +35,15 @@ let productAnalysis = [];
 let pointAnalysis = [];
 let monthlyTrend = [];
 
+let currentPage = 1;
+const pageLimit = 20;
+let totalPages = 1;
+let totalReturnCount = 0;
+
 let monthlyReturnApexChart = null;
 let productReturnApexChart = null;
 let pointReturnApexChart = null;
+let searchTimer = null;
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString("tr-TR");
@@ -48,12 +62,6 @@ function normalizeTR(value) {
     .replaceAll("ı", "i");
 }
 
-function getRiskLevel(count) {
-  if (count >= 5) return "Yüksek";
-  if (count >= 2) return "Orta";
-  return "Düşük";
-}
-
 function getRiskClass(risk) {
   if (risk === "Yüksek") return "high";
   if (risk === "Orta") return "mid";
@@ -63,25 +71,12 @@ function getRiskClass(risk) {
 function getPriorityClass(priority) {
   const value = String(priority || "").toLowerCase();
 
-  if (value.includes("yüksek") || value.includes("yuksek")) {
-    return "high";
-  }
-
-  if (value.includes("düşük") || value.includes("dusuk")) {
-    return "low";
-  }
+  if (value.includes("yüksek") || value.includes("yuksek")) return "high";
+  if (value.includes("düşük") || value.includes("dusuk")) return "low";
 
   return "medium";
 }
 
-function getProductReturnCount(productName) {
-  const found = productAnalysis.find(item => item.urun === productName);
-  return found ? Number(found.iade_sayisi || 0) : 1;
-}
-
-/* =========================
-   APEX THEME + TOOLTIP
-========================= */
 function getChartTheme() {
   const isLight = document.body.classList.contains("light-mode");
 
@@ -100,9 +95,7 @@ function getBaseChartOptions() {
 
   return {
     chart: {
-      toolbar: {
-        show: false
-      },
+      toolbar: { show: false },
       foreColor: theme.textColor,
       fontFamily: "Inter, sans-serif",
       animations: {
@@ -135,28 +128,16 @@ function createTooltip(title, value) {
       font-family:Inter, sans-serif;
       min-width:130px;
     ">
-      <div style="
-        font-size:12px;
-        color:${theme.mutedColor};
-        font-weight:800;
-        margin-bottom:5px;
-      ">
+      <div style="font-size:12px;color:${theme.mutedColor};font-weight:800;margin-bottom:5px;">
         ${title}
       </div>
-      <div style="
-        font-size:15px;
-        color:${theme.textColor};
-        font-weight:900;
-      ">
+      <div style="font-size:15px;color:${theme.textColor};font-weight:900;">
         ${value}
       </div>
     </div>
   `;
 }
 
-/* =========================
-   KPI
-========================= */
 function renderKpis(summary) {
   if (!summary) return;
 
@@ -170,15 +151,15 @@ function renderKpis(summary) {
   }
 }
 
-/* =========================
-   CHARTS
-========================= */
+async function loadReturnSummary() {
+  const summary = await apiRequest("/returns/summary");
+  renderKpis(summary);
+}
+
 function renderMonthlyTrend(data) {
   if (!monthlyReturnChartEl) return;
 
-  if (monthlyReturnApexChart) {
-    monthlyReturnApexChart.destroy();
-  }
+  if (monthlyReturnApexChart) monthlyReturnApexChart.destroy();
 
   if (!data || data.length === 0) {
     monthlyReturnChartEl.innerHTML = `
@@ -203,19 +184,10 @@ function renderMonthlyTrend(data) {
       type: "area",
       height: 280
     },
-    series: [
-      {
-        name: "İade",
-        data: values
-      }
-    ],
+    series: [{ name: "İade", data: values }],
     xaxis: {
       categories: months,
-      labels: {
-        style: {
-          fontWeight: 700
-        }
-      }
+      labels: { style: { fontWeight: 700 } }
     },
     yaxis: {
       labels: {
@@ -223,9 +195,7 @@ function renderMonthlyTrend(data) {
       }
     },
     colors: ["#ff2525"],
-    dataLabels: {
-      enabled: false
-    },
+    dataLabels: { enabled: false },
     stroke: {
       curve: "smooth",
       width: 4
@@ -239,18 +209,16 @@ function renderMonthlyTrend(data) {
     },
     markers: {
       size: 0,
-      hover: {
-        size: 7
-      }
+      hover: { size: 7 }
     },
     tooltip: {
       enabled: true,
-  intersect: false,
-  shared: false,
-  custom: function ({ series, seriesIndex, dataPointIndex, w }) {
-    const month = w.globals.labels[dataPointIndex];
-    const value = series[seriesIndex][dataPointIndex];
-    return createTooltip(month, `${formatNumber(value)} iade`);
+      intersect: false,
+      shared: false,
+      custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+        const month = w.globals.labels[dataPointIndex];
+        const value = series[seriesIndex][dataPointIndex];
+        return createTooltip(month, `${formatNumber(value)} iade`);
       }
     }
   };
@@ -259,16 +227,14 @@ function renderMonthlyTrend(data) {
   monthlyReturnApexChart.render();
 
   if (trendInfoBtn && yearFilter) {
-    trendInfoBtn.textContent = yearFilter.value;
+    trendInfoBtn.textContent = yearFilter.value || "Tümü";
   }
 }
 
 function renderProductReturnChart(data) {
   if (!productReturnChartEl) return;
 
-  if (productReturnApexChart) {
-    productReturnApexChart.destroy();
-  }
+  if (productReturnApexChart) productReturnApexChart.destroy();
 
   const list = Array.isArray(data) ? data.slice(0, 5) : [];
 
@@ -295,20 +261,13 @@ function renderProductReturnChart(data) {
       type: "bar",
       height: 300
     },
-    series: [
-      {
-        name: "İade",
-        data: values
-      }
-    ],
+    series: [{ name: "İade", data: values }],
     xaxis: {
       categories: labels,
       labels: {
         rotate: -35,
         trim: true,
-        style: {
-          fontWeight: 700
-        }
+        style: { fontWeight: 700 }
       }
     },
     yaxis: {
@@ -323,9 +282,7 @@ function renderProductReturnChart(data) {
         columnWidth: "48%"
       }
     },
-    dataLabels: {
-      enabled: false
-    },
+    dataLabels: { enabled: false },
     tooltip: {
       enabled: true,
       custom: function ({ series, seriesIndex, dataPointIndex, w }) {
@@ -343,9 +300,7 @@ function renderProductReturnChart(data) {
 function renderPointReturnChart(data) {
   if (!pointReturnChartEl) return;
 
-  if (pointReturnApexChart) {
-    pointReturnApexChart.destroy();
-  }
+  if (pointReturnApexChart) pointReturnApexChart.destroy();
 
   const list = Array.isArray(data) ? data : [];
 
@@ -372,20 +327,13 @@ function renderPointReturnChart(data) {
       type: "bar",
       height: 330
     },
-    series: [
-      {
-        name: "İade",
-        data: values
-      }
-    ],
+    series: [{ name: "İade", data: values }],
     xaxis: {
       categories: labels,
       labels: {
         rotate: -35,
         trim: true,
-        style: {
-          fontWeight: 700
-        }
+        style: { fontWeight: 700 }
       }
     },
     yaxis: {
@@ -400,9 +348,7 @@ function renderPointReturnChart(data) {
         columnWidth: "48%"
       }
     },
-    dataLabels: {
-      enabled: false
-    },
+    dataLabels: { enabled: false },
     tooltip: {
       enabled: true,
       custom: function ({ series, seriesIndex, dataPointIndex, w }) {
@@ -417,9 +363,6 @@ function renderPointReturnChart(data) {
   pointReturnApexChart.render();
 }
 
-/* =========================
-   TABLE + LISTS
-========================= */
 function renderTable(data) {
   if (!returnTableBody || !returnCountText) return;
 
@@ -436,8 +379,7 @@ function renderTable(data) {
   }
 
   data.forEach(item => {
-    const productCount = getProductReturnCount(item.urun);
-    const risk = getRiskLevel(productCount);
+    const risk = item.risk || "Düşük";
 
     returnTableBody.innerHTML += `
       <tr>
@@ -452,7 +394,72 @@ function renderTable(data) {
     `;
   });
 
-  returnCountText.textContent = `${formatNumber(data.length)} kayıt listeleniyor`;
+  returnCountText.textContent =
+    `${formatNumber(totalReturnCount)} kayıt içinden bu sayfada ${formatNumber(data.length)} kayıt gösteriliyor`;
+}
+
+function renderPagination() {
+  if (!returnPagination) return;
+
+  returnPagination.innerHTML = "";
+
+  if (totalPages <= 1) return;
+
+  function createPageButton(text, page, isActive = false, isDisabled = false) {
+    const btn = document.createElement("button");
+    btn.textContent = text;
+    btn.className = isActive ? "page-btn active" : "page-btn";
+    btn.disabled = isDisabled;
+
+    if (!isDisabled && page) {
+      btn.addEventListener("click", () => {
+        loadReturns(page);
+      });
+    }
+
+    return btn;
+  }
+
+  returnPagination.appendChild(
+    createPageButton("‹", currentPage - 1, false, currentPage === 1)
+  );
+
+  returnPagination.appendChild(
+    createPageButton("1", 1, currentPage === 1)
+  );
+
+  if (currentPage > 4) {
+    const dots = document.createElement("span");
+    dots.className = "page-dots";
+    dots.textContent = "...";
+    returnPagination.appendChild(dots);
+  }
+
+  const startPage = Math.max(2, currentPage - 1);
+  const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+  for (let i = startPage; i <= endPage; i++) {
+    returnPagination.appendChild(
+      createPageButton(String(i), i, i === currentPage)
+    );
+  }
+
+  if (currentPage < totalPages - 3) {
+    const dots = document.createElement("span");
+    dots.className = "page-dots";
+    dots.textContent = "...";
+    returnPagination.appendChild(dots);
+  }
+
+  if (totalPages > 1) {
+    returnPagination.appendChild(
+      createPageButton(String(totalPages), totalPages, currentPage === totalPages)
+    );
+  }
+
+  returnPagination.appendChild(
+    createPageButton("›", currentPage + 1, false, currentPage === totalPages)
+  );
 }
 
 function renderRiskProducts() {
@@ -554,9 +561,6 @@ function renderOperationNotes() {
   }
 }
 
-/* =========================
-   AI ACTIONS
-========================= */
 async function loadReturnAiActions() {
   const container = document.getElementById("returnAiActions");
   const sourceText = document.getElementById("returnAiSourceText");
@@ -640,14 +644,19 @@ async function loadReturnAiActions() {
   }
 }
 
-/* =========================
-   FILTERS
-========================= */
-function fillPointFilter() {
+async function fillPointFilter() {
   if (!pointFilter) return;
 
   const currentValue = pointFilter.value;
-  const points = [...new Set(returns.map(item => item.satis_noktasi).filter(Boolean))];
+
+  const data = await apiRequest("/returns/?page=1&limit=500");
+  const list = Array.isArray(data?.veriler) ? data.veriler : [];
+
+  const points = [...new Set(
+    list
+      .map(item => item.satis_noktasi)
+      .filter(value => value && value !== "-")
+  )];
 
   pointFilter.innerHTML = `<option value="all">Tümü</option>`;
 
@@ -660,10 +669,49 @@ function fillPointFilter() {
   }
 }
 
-async function loadMonthlyTrend() {
-  if (!yearFilter) return;
+function buildReturnQueryParams(page = 1) {
+  const params = new URLSearchParams();
 
-  const selectedYear = yearFilter.value;
+  params.append("page", page);
+  params.append("limit", pageLimit);
+
+  if (returnSearch && returnSearch.value.trim()) {
+    params.append("search", returnSearch.value.trim());
+  }
+
+  if (pointFilter && pointFilter.value !== "all") {
+    params.append("satis_noktasi", pointFilter.value);
+  }
+
+  if (riskFilter && riskFilter.value !== "all") {
+    params.append("risk", riskFilter.value);
+  }
+
+  if (yearFilter && yearFilter.value) {
+    params.append("year", yearFilter.value);
+  }
+
+  if (startDateFilter && startDateFilter.value) {
+    params.append("start_date", startDateFilter.value);
+  }
+
+  if (endDateFilter && endDateFilter.value) {
+    params.append("end_date", endDateFilter.value);
+  }
+
+  if (minReturnAmountFilter && minReturnAmountFilter.value) {
+    params.append("min_tutar", minReturnAmountFilter.value);
+  }
+
+  if (maxReturnAmountFilter && maxReturnAmountFilter.value) {
+    params.append("max_tutar", maxReturnAmountFilter.value);
+  }
+
+  return params;
+}
+
+async function loadMonthlyTrend() {
+  const selectedYear = yearFilter && yearFilter.value ? yearFilter.value : "2025";
   const selectedPoint = pointFilter ? pointFilter.value || "all" : "all";
   const encodedPoint = encodeURIComponent(selectedPoint);
 
@@ -674,29 +722,81 @@ async function loadMonthlyTrend() {
   renderMonthlyTrend(monthlyTrend || []);
 }
 
+async function loadReturns(page = 1) {
+  try {
+    currentPage = page;
+
+    if (returnTableBody) {
+      returnTableBody.innerHTML = `
+        <tr>
+          <td colspan="7">İade verileri yükleniyor...</td>
+        </tr>
+      `;
+    }
+
+    const params = buildReturnQueryParams(currentPage);
+    const data = await apiRequest(`/returns/?${params.toString()}`);
+
+    if (!data || !Array.isArray(data.veriler)) {
+      if (returnTableBody) {
+        returnTableBody.innerHTML = `
+          <tr>
+            <td colspan="7">İade verisi alınamadı.</td>
+          </tr>
+        `;
+      }
+      return;
+    }
+
+    returns = data.veriler;
+    filteredReturns = [...returns];
+
+    totalPages = Number(data.toplam_sayfa || 1);
+    totalReturnCount = Number(data.toplam_kayit || 0);
+
+    renderTable(filteredReturns);
+    renderPagination();
+    renderOperationNotes();
+
+  } catch (error) {
+    console.error("İade verileri yüklenemedi:", error);
+
+    if (returnTableBody) {
+      returnTableBody.innerHTML = `
+        <tr>
+          <td colspan="7">İade verileri yüklenemedi. API, token veya yetki kontrol edilmeli.</td>
+        </tr>
+      `;
+    }
+  }
+}
+
+async function loadAnalyses() {
+  productAnalysis = await apiRequest("/returns/product-analysis") || [];
+  pointAnalysis = await apiRequest("/returns/point-analysis") || [];
+
+  renderProductReturnChart(productAnalysis);
+  renderPointReturnChart(pointAnalysis);
+  renderRiskProducts();
+  renderOperationNotes();
+}
+
 function applyFilters() {
-  const searchValue = returnSearch ? normalizeTR(returnSearch.value.trim()) : "";
-  const pointValue = pointFilter ? pointFilter.value : "all";
-  const riskValue = riskFilter ? riskFilter.value : "all";
+  loadReturns(1);
+  loadMonthlyTrend();
+}
 
-  filteredReturns = returns.filter(item => {
-    const productCount = getProductReturnCount(item.urun);
-    const risk = getRiskLevel(productCount);
+function clearReturnFilters() {
+  if (returnSearch) returnSearch.value = "";
+  if (pointFilter) pointFilter.value = "all";
+  if (riskFilter) riskFilter.value = "all";
+  if (yearFilter) yearFilter.value = "2025";
+  if (startDateFilter) startDateFilter.value = "";
+  if (endDateFilter) endDateFilter.value = "";
+  if (minReturnAmountFilter) minReturnAmountFilter.value = "";
+  if (maxReturnAmountFilter) maxReturnAmountFilter.value = "";
 
-    const searchMatch =
-      normalizeTR(item.iade_no).includes(searchValue) ||
-      normalizeTR(item.fatura_no).includes(searchValue) ||
-      normalizeTR(item.musteri).includes(searchValue) ||
-      normalizeTR(item.urun).includes(searchValue) ||
-      normalizeTR(item.satis_noktasi).includes(searchValue);
-
-    const pointMatch = pointValue === "all" || item.satis_noktasi === pointValue;
-    const riskMatch = riskValue === "all" || risk === riskValue;
-
-    return searchMatch && pointMatch && riskMatch;
-  });
-
-  renderTable(filteredReturns);
+  loadReturns(1);
   loadMonthlyTrend();
 }
 
@@ -704,10 +804,7 @@ function exportReturns() {
   let csv = "\uFEFFİade No,Fatura No,Müşteri,Ürün,İade Tutarı,Tarih,Satış Noktası,Risk\n";
 
   filteredReturns.forEach(item => {
-    const productCount = getProductReturnCount(item.urun);
-    const risk = getRiskLevel(productCount);
-
-    csv += `"${item.iade_no || ""}","${item.fatura_no || ""}","${item.musteri || ""}","${item.urun || ""}","${item.iade_tutari || 0}","${item.tarih ? String(item.tarih).slice(0, 10) : ""}","${item.satis_noktasi || ""}","${risk}"\n`;
+    csv += `"${item.iade_no || ""}","${item.fatura_no || ""}","${item.musteri || ""}","${item.urun || ""}","${item.iade_tutari || 0}","${item.tarih ? String(item.tarih).slice(0, 10) : ""}","${item.satis_noktasi || ""}","${item.risk || ""}"\n`;
   });
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -721,83 +818,65 @@ function exportReturns() {
   URL.revokeObjectURL(url);
 }
 
-/* =========================
-   LOAD PAGE
-========================= */
-async function loadReturnsPage() {
-  try {
-    if (returnTableBody) {
-      returnTableBody.innerHTML = `
-        <tr>
-          <td colspan="7">İade verileri yükleniyor...</td>
-        </tr>
-      `;
+function bindEvents() {
+  if (returnSearch) {
+    returnSearch.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilters, 400);
+    });
+  }
+
+  if (pointFilter) pointFilter.addEventListener("change", applyFilters);
+  if (riskFilter) riskFilter.addEventListener("change", applyFilters);
+  if (yearFilter) yearFilter.addEventListener("change", applyFilters);
+
+  [
+    startDateFilter,
+    endDateFilter,
+    minReturnAmountFilter,
+    maxReturnAmountFilter
+  ].forEach(input => {
+    if (input) {
+      input.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(applyFilters, 500);
+      });
+
+      input.addEventListener("change", applyFilters);
     }
+  });
 
-    const selectedYear = yearFilter ? yearFilter.value : "2025";
-    const selectedPoint = pointFilter ? pointFilter.value || "all" : "all";
-    const encodedPoint = encodeURIComponent(selectedPoint);
+  if (clearReturnFiltersBtn) {
+    clearReturnFiltersBtn.addEventListener("click", clearReturnFilters);
+  }
 
-    const [summary, returnsResponse, productResponse, pointResponse, monthlyResponse] =
-      await Promise.all([
-        apiRequest("/returns/summary"),
-        apiRequest("/returns?limit=500&offset=0"),
-        apiRequest("/returns/product-analysis"),
-        apiRequest("/returns/point-analysis"),
-        apiRequest(`/returns/monthly-trend?year=${selectedYear}&satis_noktasi=${encodedPoint}`)
-      ]);
+  if (exportBtn) {
+    exportBtn.addEventListener("click", exportReturns);
+  }
+}
 
-    returns = returnsResponse?.veriler || [];
-    filteredReturns = [...returns];
-    productAnalysis = productResponse || [];
-    pointAnalysis = pointResponse || [];
-    monthlyTrend = monthlyResponse || [];
+async function initReturnsPage() {
+  try {
+    bindEvents();
 
-    renderKpis(summary);
-    fillPointFilter();
-    renderProductReturnChart(productAnalysis);
-    renderPointReturnChart(pointAnalysis);
-    renderMonthlyTrend(monthlyTrend);
-    renderTable(filteredReturns);
-    renderRiskProducts();
-    renderOperationNotes();
+    await loadReturnSummary();
+    await fillPointFilter();
+    await loadAnalyses();
+    await loadMonthlyTrend();
+    await loadReturns(1);
     await loadReturnAiActions();
 
   } catch (error) {
-    console.error("İade sayfası yüklenemedi:", error);
+    console.error("İadeler sayfası yüklenemedi:", error);
 
     if (returnTableBody) {
       returnTableBody.innerHTML = `
         <tr>
-          <td colspan="7">İade verileri yüklenemedi. Backend, token veya /returns endpointlerini kontrol et.</td>
+          <td colspan="7">İade verileri yüklenemedi. Token, API veya yetki kontrol edilmeli.</td>
         </tr>
       `;
     }
   }
 }
 
-function setupReturnsEvents() {
-  if (returnSearch) returnSearch.addEventListener("input", applyFilters);
-
-  if (pointFilter) {
-    pointFilter.addEventListener("change", () => {
-      applyFilters();
-      loadMonthlyTrend();
-    });
-  }
-
-  if (riskFilter) riskFilter.addEventListener("change", applyFilters);
-
-  if (yearFilter) {
-    yearFilter.addEventListener("change", () => {
-      loadMonthlyTrend();
-    });
-  }
-
-  if (exportBtn) exportBtn.addEventListener("click", exportReturns);
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  setupReturnsEvents();
-  loadReturnsPage();
-});
+window.addEventListener("DOMContentLoaded", initReturnsPage);

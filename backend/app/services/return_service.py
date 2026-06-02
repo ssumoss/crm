@@ -1,6 +1,14 @@
 from sqlalchemy import text
 
 
+def get_return_risk_level(count: int):
+    if count >= 5:
+        return "Yüksek"
+    if count >= 2:
+        return "Orta"
+    return "Düşük"
+
+
 def get_return_summary_service(db):
     row = db.execute(text("""
         SELECT
@@ -38,18 +46,71 @@ def get_return_summary_service(db):
     }
 
 
-def get_all_returns_service(db, limit: int = 100, offset: int = 0):
-    total_count = db.execute(text("SELECT COUNT(*) FROM iadeler")).scalar()
+def get_all_returns_service(
+    db,
+    page: int = 1,
+    limit: int = 20,
+    search: str | None = None,
+    satis_noktasi: str | None = None,
+    risk: str | None = None,
+    year: int | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    min_tutar: float | None = None,
+    max_tutar: float | None = None
+):
+    where = ["1=1"]
+    params = {}
 
-    rows = db.execute(text("""
+    if search:
+        where.append("""
+            (
+                CAST(i.iade_id AS CHAR) LIKE :search
+                OR CAST(i.fatura_no AS CHAR) LIKE :search
+                OR CONCAT(COALESCE(m.musteri_adi, ''), ' ', COALESCE(m.musteri_soyadi, '')) LIKE :search
+                OR COALESCE(u.urun_adi, '') LIKE :search
+                OR COALESCE(u.urun_kodu, '') LIKE :search
+                OR COALESCE(sn.satis_noktasi_adi, '') LIKE :search
+                OR COALESCE(i.aciklama, '') LIKE :search
+            )
+        """)
+        params["search"] = f"%{search}%"
+
+    if satis_noktasi and satis_noktasi != "all":
+        where.append("COALESCE(sn.satis_noktasi_adi, '-') = :satis_noktasi")
+        params["satis_noktasi"] = satis_noktasi
+
+    if year:
+        where.append("YEAR(i.iade_tarihi) = :year")
+        params["year"] = year
+
+    if start_date:
+        where.append("DATE(i.iade_tarihi) >= :start_date")
+        params["start_date"] = start_date
+
+    if end_date:
+        where.append("DATE(i.iade_tarihi) <= :end_date")
+        params["end_date"] = end_date
+
+    if min_tutar is not None:
+        where.append("i.iade_tutari >= :min_tutar")
+        params["min_tutar"] = min_tutar
+
+    if max_tutar is not None:
+        where.append("i.iade_tutari <= :max_tutar")
+        params["max_tutar"] = max_tutar
+
+    where_sql = " AND ".join(where)
+
+    rows = db.execute(text(f"""
         SELECT
             i.iade_id,
             i.fatura_no,
-            CONCAT(m.musteri_adi, ' ', COALESCE(m.musteri_soyadi, '')) AS musteri,
+            CONCAT(COALESCE(m.musteri_adi, ''), ' ', COALESCE(m.musteri_soyadi, '')) AS musteri,
             COALESCE(GROUP_CONCAT(DISTINCT u.urun_adi SEPARATOR ', '), 'Ürün bilgisi yok') AS urunler,
             i.iade_tutari,
             i.iade_tarihi,
-            sn.satis_noktasi_adi,
+            COALESCE(sn.satis_noktasi_adi, '-') AS satis_noktasi,
             i.aciklama,
             COALESCE(SUM(sd.adet), 0) AS iade_adedi
         FROM iadeler i
@@ -58,6 +119,7 @@ def get_all_returns_service(db, limit: int = 100, offset: int = 0):
         LEFT JOIN satis_noktalari sn ON f.satis_noktasi_id = sn.satis_noktasi_id
         LEFT JOIN siparis_detaylari sd ON f.fatura_no = sd.fatura_no
         LEFT JOIN urunler u ON sd.urun_id = u.urun_id
+        WHERE {where_sql}
         GROUP BY
             i.iade_id,
             i.fatura_no,
@@ -68,28 +130,50 @@ def get_all_returns_service(db, limit: int = 100, offset: int = 0):
             sn.satis_noktasi_adi,
             i.aciklama
         ORDER BY i.iade_tarihi DESC
-        LIMIT :limit OFFSET :offset
-    """), {"limit": limit, "offset": offset}).fetchall()
+    """), params).fetchall()
+
+    product_counts = {}
+
+    for row in rows:
+        product_name = row[3] or "Ürün bilgisi yok"
+        product_counts[product_name] = product_counts.get(product_name, 0) + 1
+
+    veriler = []
+
+    for row in rows:
+        product_name = row[3] or "Ürün bilgisi yok"
+        risk_level = get_return_risk_level(product_counts.get(product_name, 1))
+
+        item = {
+            "iade_id": int(row[0] or 0),
+            "iade_no": f"IADE-{row[0]}",
+            "fatura_no": row[1],
+            "musteri": row[2].strip() if row[2] and row[2].strip() else "-",
+            "urun": product_name,
+            "iade_tutari": float(row[4] or 0),
+            "tarih": str(row[5]) if row[5] else "-",
+            "satis_noktasi": row[6] or "-",
+            "aciklama": row[7] or "-",
+            "iade_adedi": int(row[8] or 0),
+            "risk": risk_level
+        }
+
+        if risk and risk != "all" and item["risk"] != risk:
+            continue
+
+        veriler.append(item)
+
+    total_count = len(veriler)
+    toplam_sayfa = (total_count + limit - 1) // limit if limit else 1
+    offset = (page - 1) * limit
 
     return {
-        "toplam_kayit": int(total_count or 0),
+        "toplam_kayit": total_count,
+        "toplam_sayfa": toplam_sayfa,
+        "page": int(page),
         "limit": int(limit),
         "offset": int(offset),
-        "veriler": [
-            {
-                "iade_id": int(row[0] or 0),
-                "iade_no": f"IADE-{row[0]}",
-                "fatura_no": row[1],
-                "musteri": row[2].strip() if row[2] else "-",
-                "urun": row[3] or "Ürün bilgisi yok",
-                "iade_tutari": float(row[4] or 0),
-                "tarih": str(row[5]) if row[5] else "-",
-                "satis_noktasi": row[6] or "-",
-                "aciklama": row[7] or "-",
-                "iade_adedi": int(row[8] or 0)
-            }
-            for row in rows
-        ]
+        "veriler": veriler[offset:offset + limit]
     }
 
 

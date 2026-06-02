@@ -25,118 +25,116 @@
       </button>
 
       <nav class="menu">
+        <a href="dashboard.html" data-permission="dashboard_goruntule">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Özet</span>
+        </a>
 
-  <a href="dashboard.html" data-permission="dashboard_goruntule">
-    <i class="fa-solid fa-chart-line"></i>
-    <span>Özet</span>
-  </a>
+        <div class="menu-group">
+          <button type="button" class="menu-group-title">
+            <i class="fa-solid fa-users"></i>
+            <span>Müşteri Yönetimi</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
 
-  <div class="menu-group">
-    <button type="button" class="menu-group-title">
-      <i class="fa-solid fa-users"></i>
-      <span>Müşteri Yönetimi</span>
-      <i class="fa-solid fa-chevron-down"></i>
-    </button>
+          <div class="submenu">
+            <a href="customers.html" data-permission="musteri_goruntule">
+              <i class="fa-solid fa-user-group"></i>
+              <span>Müşteriler</span>
+            </a>
 
-    <div class="submenu">
-      <a href="customers.html" data-permission="musteri_goruntule">
-        <i class="fa-solid fa-user-group"></i>
-        <span>Müşteriler</span>
-      </a>
+            <a href="segment-history.html" data-permission="segment_gecmisi_goruntule">
+              <i class="fa-solid fa-timeline"></i>
+              <span>Segment Geçmişi</span>
+            </a>
+          </div>
+        </div>
 
-      <a href="segment-history.html" data-permission="segment_gecmisi_goruntule">
-        <i class="fa-solid fa-timeline"></i>
-        <span>Segment Geçmişi</span>
-      </a>
-    </div>
-  </div>
+        <div class="menu-group">
+          <button type="button" class="menu-group-title">
+            <i class="fa-solid fa-database"></i>
+            <span>Satış Verileri</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
 
-  <div class="menu-group">
-    <button type="button" class="menu-group-title">
-      <i class="fa-solid fa-database"></i>
-      <span>Satış Verileri</span>
-      <i class="fa-solid fa-chevron-down"></i>
-    </button>
+          <div class="submenu">
+            <a href="invoices.html" data-permission="musteri_detay_goruntule">
+              <i class="fa-solid fa-file-invoice"></i>
+              <span>Faturalar</span>
+            </a>
 
-    <div class="submenu">
-      <a href="invoices.html" data-permission="musteri_detay_goruntule">
-        <i class="fa-solid fa-file-invoice"></i>
-        <span>Faturalar</span>
-      </a>
+            <a href="products.html" data-permission="veri_import">
+              <i class="fa-solid fa-box"></i>
+              <span>Ürünler</span>
+            </a>
 
-      <a href="products.html" data-permission="veri_import">
-        <i class="fa-solid fa-box"></i>
-        <span>Ürünler</span>
-      </a>
+            <a href="returns.html" data-permission="veri_import">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>İadeler</span>
+            </a>
 
-      <a href="returns.html" data-permission="veri_import">
-        <i class="fa-solid fa-rotate-left"></i>
-        <span>İadeler</span>
-      </a>
+            <a href="channels.html" data-permission="veri_import">
+              <i class="fa-solid fa-store"></i>
+              <span>Satış Noktaları</span>
+            </a>
+          </div>
+        </div>
 
-      <a href="channels.html" data-permission="veri_import">
-        <i class="fa-solid fa-store"></i>
-        <span>Satış Noktaları</span>
-      </a>
-    </div>
-  </div>
+        <div class="menu-group">
+          <button type="button" class="menu-group-title">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Analizler</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
 
-  <div class="menu-group">
-    <button type="button" class="menu-group-title">
-      <i class="fa-solid fa-chart-pie"></i>
-      <span>Analizler</span>
-      <i class="fa-solid fa-chevron-down"></i>
-    </button>
+          <div class="submenu">
+            <a href="rfm.html" data-permission="rfm_analizi_calistir">
+              <i class="fa-solid fa-ranking-star"></i>
+              <span>RFM Analizi</span>
+            </a>
 
-    <div class="submenu">
-      <a href="rfm.html" data-permission="rfm_analizi_calistir">
-        <i class="fa-solid fa-ranking-star"></i>
-        <span>RFM Analizi</span>
-      </a>
+            <a href="analytics.html" data-permission="ltv_analizi_calistir">
+              <i class="fa-solid fa-chart-simple"></i>
+              <span>Analitik</span>
+            </a>
 
-      <a href="analytics.html" data-permission="ltv_analizi_calistir">
-        <i class="fa-solid fa-chart-simple"></i>
-        <span>Analitik</span>
-      </a>
+            <a href="reports.html" data-permission="rapor_export">
+              <i class="fa-solid fa-file-export"></i>
+              <span>Raporlar</span>
+            </a>
+          </div>
+        </div>
 
-      <a href="reports.html" data-permission="rapor_export">
-        <i class="fa-solid fa-file-export"></i>
-        <span>Raporlar</span>
-      </a>
-    </div>
-  </div>
+        <div class="menu-group">
+          <button type="button" class="menu-group-title">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Yönetim</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
 
-  <div class="menu-group">
-    <button type="button" class="menu-group-title">
-      <i class="fa-solid fa-shield-halved"></i>
-      <span>Yönetim</span>
-      <i class="fa-solid fa-chevron-down"></i>
-    </button>
+          <div class="submenu">
+            <a href="users-permissions.html" data-permission="kullanici_yonet">
+              <i class="fa-solid fa-user-shield"></i>
+              <span>Kullanıcı & Yetki</span>
+            </a>
 
-    <div class="submenu">
-      <a href="users-permissions.html" data-permission="kullanici_yonet">
-        <i class="fa-solid fa-user-shield"></i>
-        <span>Kullanıcı & Yetki</span>
-      </a>
+            <a href="logs-audit.html" data-permission="audit_log_goruntule">
+              <i class="fa-solid fa-clipboard-list"></i>
+              <span>Log & Denetim</span>
+            </a>
 
-      <a href="logs-audit.html" data-permission="audit_log_goruntule">
-        <i class="fa-solid fa-clipboard-list"></i>
-        <span>Log & Denetim</span>
-      </a>
+            <a href="settings.html" data-permission="izin_yonet">
+              <i class="fa-solid fa-gear"></i>
+              <span>Ayarlar</span>
+            </a>
+          </div>
+        </div>
 
-      <a href="settings.html" data-permission="izin_yonet">
-        <i class="fa-solid fa-gear"></i>
-        <span>Ayarlar</span>
-      </a>
-    </div>
-  </div>
-
-  <a href="login.html">
-    <i class="fa-solid fa-right-from-bracket"></i>
-    <span>Çıkış</span>
-  </a>
-
-</nav>
+        <a href="login.html">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Çıkış</span>
+        </a>
+      </nav>
     </aside>
 
     <main class="main">
@@ -148,7 +146,7 @@
         <div class="top-right">
           <div class="search">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input id="returnSearch" type="text" placeholder="Ürün, müşteri veya satış noktası ara..." />
+            <input id="returnSearch" type="text" placeholder="İade no, fatura no, ürün, müşteri veya satış noktası ara..." />
           </div>
 
           <button class="theme-btn" id="themeToggle">
@@ -225,10 +223,12 @@
 
           <div class="user" id="userDropdownBtn">
             <div class="avatar" id="userAvatar">K</div>
+
             <div>
               <strong id="topUserName">Kullanıcı</strong>
               <span id="topUserRole">Rol</span>
             </div>
+
             <i class="fa-solid fa-chevron-down"></i>
 
             <div class="user-menu" id="userMenu">
@@ -305,11 +305,37 @@
         <div class="filter-group">
           <label>Yıl</label>
           <select id="yearFilter">
-            <option value="2025">2025</option>
+            <option value="">Tümü</option>
+            <option value="2025" selected>2025</option>
             <option value="2024">2024</option>
             <option value="2023">2023</option>
           </select>
         </div>
+
+        <div class="filter-group">
+          <label>Başlangıç Tarihi</label>
+          <input id="startDateFilter" type="date" />
+        </div>
+
+        <div class="filter-group">
+          <label>Bitiş Tarihi</label>
+          <input id="endDateFilter" type="date" />
+        </div>
+
+        <div class="filter-group">
+          <label>Min İade Tutarı</label>
+          <input id="minReturnAmountFilter" type="number" min="0" placeholder="₺" />
+        </div>
+
+        <div class="filter-group">
+          <label>Max İade Tutarı</label>
+          <input id="maxReturnAmountFilter" type="number" min="0" placeholder="₺" />
+        </div>
+
+        <button class="export-btn" id="clearReturnFiltersBtn" type="button">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+          Temizle
+        </button>
 
         <button class="export-btn" id="exportBtn">
           <i class="fa-solid fa-file-export"></i>
@@ -377,9 +403,15 @@
               </tr>
             </thead>
 
-            <tbody id="returnTableBody"></tbody>
+            <tbody id="returnTableBody">
+              <tr>
+                <td colspan="7">İade verileri yükleniyor...</td>
+              </tr>
+            </tbody>
           </table>
         </div>
+
+        <div id="returnPagination" class="pagination"></div>
       </section>
 
       <section class="extra-grid">
@@ -399,6 +431,7 @@
                 <i class="fa-solid fa-brain"></i>
                 AI İade Aksiyon Önerileri
               </h3>
+
               <p id="returnAiSourceText" class="ai-source-text">
                 AI önerileri hazırlanıyor
               </p>
